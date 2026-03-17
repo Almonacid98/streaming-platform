@@ -94,3 +94,10 @@ Esta relación **muchos a muchos** se resuelve mediante la tabla
 evento de visualización.
 
 ------------------------------------------------------------------------
+
+# 🗺️ Diagrama Entidad‑Relación
+
+A continuación se muestra el diagrama ER del sistema que representa las
+entidades principales y sus relaciones.
+
+![Diagrama ER del sistema](docs/er_diagram.png)
