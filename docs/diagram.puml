@@ -1,0 +1,33 @@
+@startuml
+title Sistema de Cine y Streaming - Diagrama ER
+
+entity Usuarios {
+  + id_usuario : INT <<PK>>
+  --
+  nombre : VARCHAR
+  email : VARCHAR
+  fecha_registro : DATE
+}
+
+entity Contenido {
+  + id_contenido : INT <<PK>>
+  --
+  titulo : VARCHAR
+  tipo : VARCHAR
+  genero : VARCHAR
+  año : INT
+  duracion_min : INT
+}
+
+entity Visualizaciones {
+  + id_visualizacion : INT <<PK>>
+  --
+  id_usuario : INT <<FK>>
+  id_contenido : INT <<FK>>
+  fecha_visualizacion : DATE
+}
+
+Usuarios ||--o{ Visualizaciones : realiza
+Contenido ||--o{ Visualizaciones : tiene
+
+@enduml
