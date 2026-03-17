@@ -9,6 +9,13 @@ entity Usuarios {
   fecha_registro : DATE
 }
 
+entity Creadores {
+  + id_creador : INT <<PK>>
+  --
+  nombre : VARCHAR
+  email : VARCHAR
+}
+
 entity Contenido {
   + id_contenido : INT <<PK>>
   --
@@ -17,6 +24,7 @@ entity Contenido {
   genero : VARCHAR
   año : INT
   duracion_min : INT
+  id_creador : INT <<FK>>
 }
 
 entity Visualizaciones {
@@ -29,5 +37,6 @@ entity Visualizaciones {
 
 Usuarios ||--o{ Visualizaciones : realiza
 Contenido ||--o{ Visualizaciones : tiene
+Creadores ||--o{ Contenido : publica
 
 @enduml
