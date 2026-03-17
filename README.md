@@ -21,24 +21,37 @@ historial de visualizaciones.
 
 # 🚀 Características Principales
 
--   **Gestión de Usuarios:** Registro y administración de usuarios
-    dentro del sistema.
--   **Catálogo de Contenido:** Administración de películas y series
-    disponibles en la plataforma.
--   **Historial de Visualización:** Registro de qué contenido ha visto
-    cada usuario.
--   **Relaciones en Base de Datos:** Implementación de claves primarias
-    y foráneas para modelar las relaciones entre entidades.
--   **Consultas Relacionales:** Posibilidad de consultar información
-    combinando múltiples tablas (JOIN).
+- **Gestión de Usuarios:**  
+  El sistema permite registrar y administrar los usuarios de la plataforma.  
+  Cada usuario cuenta con información básica como nombre, correo electrónico y fecha de registro, lo que permite identificar quién interactúa con el sistema y mantener un historial de actividad dentro de la plataforma.
+
+- **Gestión de Creadores de Contenido:**  
+  La plataforma distingue entre usuarios que consumen contenido y creadores responsables de publicarlo.  
+  Los creadores pueden registrar y administrar películas o series dentro del catálogo, permitiendo organizar quién es responsable de cada contenido disponible en la plataforma.
+
+- **Catálogo de Contenido:**  
+  El sistema permite almacenar y gestionar un catálogo de películas y series, incluyendo información como título, género, tipo de contenido y duración.  
+  Cada contenido está asociado a un creador, lo que permite mantener una organización clara de quién publica cada elemento dentro de la plataforma.
+
+- **Historial de Visualización:**  
+  Se registra cada vez que un usuario visualiza un contenido.  
+  Esto permite mantener un historial de visualizaciones que refleja la interacción de los usuarios con el catálogo, facilitando consultas como qué contenido fue visto, cuándo fue visualizado y qué usuarios lo consumieron.
+
+- **Relaciones en Base de Datos:**  
+  El sistema utiliza claves primarias y claves foráneas para establecer relaciones entre las diferentes entidades del modelo.  
+  Esto garantiza la integridad de los datos y permite representar correctamente las relaciones entre usuarios, creadores, contenido y visualizaciones.
+
+- **Consultas Relacionales:**  
+  Gracias al uso de múltiples tablas relacionadas, el sistema permite realizar consultas que combinan información de distintas entidades mediante operaciones SQL como `JOIN`.  
+  Esto facilita obtener información relevante como el historial de visualizaciones de un usuario, el contenido publicado por un creador o el contenido más visto dentro de la plataforma.
 
 ------------------------------------------------------------------------
 
 # 🛠️ Tecnologías Utilizadas
 
--   **Lenguaje:** Python\
--   **Base de Datos:** PostgreSQL\
--   **Lenguaje de Consulta:** SQL\
+-   **Lenguaje:** Python\ DEMO
+-   **Base de Datos:** PostgreSQL\ DEMO
+-   **Lenguaje de Consulta:** SQL\    DEMO
 -   **Modelado:** Diagrama Entidad-Relación (ER)
 
 ------------------------------------------------------------------------
