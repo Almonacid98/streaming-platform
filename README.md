@@ -81,18 +81,27 @@ Relaciona a los usuarios con el contenido que han visto.
 -   `fecha_visualizacion`
 
 ------------------------------------------------------------------------
+------------------------------------------------------------------------
 
+## 🎬 Creadores
+
+Representa a los usuarios responsables de **publicar o administrar contenido dentro de la plataforma**.  
+Estos usuarios cumplen un rol similar a administradores o creadores de contenido que cargan películas o series al catálogo.
+
+- `id_creador` (PK)
+- `nombre`
+- `email`
+
+------------------------------------------------------------------------
 # 🔗 Relaciones del Sistema
 
 El modelo de datos implementa las siguientes relaciones:
 
--   Un **usuario puede visualizar múltiples contenidos**.
--   Un **contenido puede ser visualizado por múltiples usuarios**.
+- Un **creador puede publicar múltiples contenidos** dentro de la plataforma.
+- Un **usuario puede visualizar múltiples contenidos**.
+- Un **contenido puede ser visualizado por múltiples usuarios**.
 
-Esta relación **muchos a muchos** se resuelve mediante la tabla
-**Visualizaciones**, que actúa como tabla intermedia registrando cada
-evento de visualización.
-
+La relación entre usuarios y contenido es **muchos a muchos** y se resuelve mediante la tabla **Visualizaciones**, que actúa como tabla intermedia registrando cada evento de visualización.
 ------------------------------------------------------------------------
 
 # 🗺️ Diagrama Entidad‑Relación
