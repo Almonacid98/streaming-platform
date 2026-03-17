@@ -1,4 +1,4 @@
-# streaming-platform
+# Streaming-platform
 ![Status](https://img.shields.io/badge/Status-En%20Desarrollo-green)
 ![Tech](https://img.shields.io/badge/Stack-Python%20%7C%20PostgreSQL%20%7C%20SQL-blue)
 
