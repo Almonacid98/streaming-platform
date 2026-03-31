@@ -6,5 +6,5 @@ echo "Activando entorno virtual..."
 #echo "Aplicando migraciones..."
 #python manage.py migrate
 
-#echo "Levantando servidor Django..."
-#python manage.py runserver
+echo "Levantando servidor Django..."
+python manage.py runserver
