@@ -123,3 +123,80 @@ A continuación se muestra el diagrama ER del sistema que representa las
 entidades principales y sus relaciones.
 
 ![Diagrama ER del sistema](docs/er_diagram.png)
+
+------------------------------------------------------------------------
+
+# ⚙️ Requisitos Previos
+
+- Python 3
+- pip
+- Git
+- Editor de código (VS Code recomendado)
+
+------------------------------------------------------------------------
+
+# 🛠️ Instalación
+
+1. Clonar el repositorio:
+
+```bash
+git clone https://github.com/Almonacid98/streaming-platform.git
+cd streaming-platform
+```
+
+2. Ejecutar el script de instalación:
+
+```bash
+./install.sh
+```
+
+Este script realiza automáticamente:
+- creación del entorno virtual (`streaming_env`)
+- activación del entorno
+- instalación de dependencias
+
+------------------------------------------------------------------------
+
+# ▶️ Ejecución
+
+1. Levantar el servidor:
+
+```bash
+./boot.sh
+```
+
+Este script:
+- activa el entorno virtual
+- aplica migraciones
+- inicia el servidor Django
+
+2. Crear superusuario (opcional):
+
+```bash
+python manage.py createsuperuser
+```
+
+3. Acceder al sistema:
+
+- http://127.0.0.1:8000/
+- http://127.0.0.1:8000/admin/
+
+------------------------------------------------------------------------
+
+# 🧪 Scripts de Automatización
+
+### 🔹 install.sh
+Configura el entorno automáticamente.
+
+```bash
+./install.sh
+```
+
+### 🔹 boot.sh
+Levanta el servidor Django.
+
+```bash
+./boot.sh
+```
+
+------------------------------------------------------------------------
