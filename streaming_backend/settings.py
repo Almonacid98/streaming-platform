@@ -76,8 +76,12 @@ WSGI_APPLICATION = 'streaming_backend.wsgi.application'
 # DATABASE
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'streaming_db',
+        'USER': 'postgres',
+        'PASSWORD': 'gabriel98',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
