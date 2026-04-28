@@ -128,3 +128,9 @@ CORS_ALLOWED_ORIGINS = [
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Streaming API',
+    'DESCRIPTION': 'API de usuarios, contenidos y visualizaciones',
+    'VERSION': '1.0.0',
+}
