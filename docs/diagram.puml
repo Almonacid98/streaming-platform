@@ -1,19 +1,16 @@
 @startuml
-title Sistema de Cine y Streaming - Diagrama ER
+title Sistema de Cine y Streaming - Diagrama ER (Actualizado)
 
 entity Usuarios {
   + id_usuario : INT <<PK>>
   --
   nombre : VARCHAR
   email : VARCHAR
+  password : VARCHAR
+  edad : INT
+  genero : VARCHAR
+  rol : VARCHAR
   fecha_registro : DATE
-}
-
-entity Creadores {
-  + id_creador : INT <<PK>>
-  --
-  nombre : VARCHAR
-  email : VARCHAR
 }
 
 entity Contenido {
@@ -37,6 +34,11 @@ entity Visualizaciones {
 
 Usuarios ||--o{ Visualizaciones : realiza
 Contenido ||--o{ Visualizaciones : tiene
-Creadores ||--o{ Contenido : publica
+Usuarios ||--o{ Contenido : publica
+
+note right of Contenido
+Solo usuarios con rol = "creador"
+pueden publicar contenido
+end note
 
 @enduml
