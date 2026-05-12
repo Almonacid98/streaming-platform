@@ -1,10 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from .views import UsuarioViewSet, ContenidoViewSet, VisualizacionViewSet
+from .views import ContenidoViewSet, VisualizacionViewSet
 
 router = DefaultRouter()
-router.register(r'usuarios', UsuarioViewSet)
+
 router.register(r'contenidos', ContenidoViewSet)
 router.register(r'visualizaciones', VisualizacionViewSet)
 
