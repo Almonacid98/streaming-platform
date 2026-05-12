@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
 
-
 class Contenido(models.Model):
     titulo = models.CharField(max_length=200)
     tipo = models.CharField(max_length=50)
