@@ -214,9 +214,11 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API de usuarios, contenidos y visualizaciones',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+
+    'SWAGGER_UI_SETTINGS': {
+        'persistAuthorization': True,
+    },
 }
-
-
 # ==========================================
 # LOGGING
 # ==========================================

@@ -1,9 +1,10 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 from .models import User
 
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
+class CustomUserAdmin(UserAdmin):
 
     list_display = (
         "id",
@@ -25,4 +26,22 @@ class UserAdmin(admin.ModelAdmin):
         "rol",
         "is_staff",
         "is_superuser",
+    )
+
+    fieldsets = UserAdmin.fieldsets + (
+        (
+            "Información Streaming",
+            {
+                "fields": (
+                    "rol",
+                    "edad",
+                    "genero",
+                    "fecha_creacion",
+                )
+            },
+        ),
+    )
+
+    readonly_fields = (
+        "fecha_creacion",
     )

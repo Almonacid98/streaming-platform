@@ -1,48 +1,50 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
+from users.models import User
 
 
 class IsAdminOrCreator(BasePermission):
     """
-    Permite crear contenido solamente a:
-    - ADMIN
-    - CREADOR
+    Permite:
+    - Lectura pública
+    - Crear contenido solo a ADMIN o CREADOR
     """
+
     def has_permission(self, request, view):
 
-        # Lectura pública
         if request.method in SAFE_METHODS:
             return True
 
-        # Usuario autenticado
         if not request.user.is_authenticated:
             return False
 
-        return request.user.rol in ['admin', 'creador']
+        return request.user.rol in [
+            User.Roles.ADMIN,
+            User.Roles.CREADOR
+        ]
 
 
 class IsOwnerOrAdmin(BasePermission):
     """
-    Solo el dueño del contenido o ADMIN
-    puede modificarlo.
+    Solo el dueño del contenido o un ADMIN
+    puede modificar o eliminar.
     """
+
     def has_object_permission(self, request, view, obj):
 
-        # Lectura pública
         if request.method in SAFE_METHODS:
             return True
 
-        # ADMIN puede todo
-        if request.user.rol == 'admin':
+        if request.user.rol == User.Roles.ADMIN:
             return True
 
-        # El creador del contenido puede editarlo
         return obj.creador == request.user
 
 
 class IsAuthenticatedClient(BasePermission):
     """
-    Solo usuarios autenticados
-    pueden gestionar visualizaciones.
+    Solo usuarios autenticados pueden
+    gestionar visualizaciones.
     """
+
     def has_permission(self, request, view):
         return request.user.is_authenticated
