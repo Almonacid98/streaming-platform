@@ -69,3 +69,11 @@ class ProfileSerializer(serializers.ModelSerializer):
         )
 
         read_only_fields = fields
+
+
+# ==========================================
+# LOGOUT JWT
+# ==========================================
+class LogoutSerializer(serializers.Serializer):
+
+    refresh = serializers.CharField()
