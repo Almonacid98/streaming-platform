@@ -20,12 +20,26 @@ urlpatterns = [
     # ==========================================
     # ADMIN
     # ==========================================
-    path('admin/', admin.site.urls),
+    path(
+        'admin/',
+        admin.site.urls
+    ),
 
     # ==========================================
     # API CORE
     # ==========================================
-    path('api/', include('core.urls')),
+    path(
+        'api/',
+        include('core.urls')
+    ),
+
+    # ==========================================
+    # API USERS
+    # ==========================================
+    path(
+        'api/',
+        include('users.urls')
+    ),
 
     # ==========================================
     # JWT AUTH
@@ -56,7 +70,9 @@ urlpatterns = [
 
     path(
         'api/docs/',
-        SpectacularSwaggerView.as_view(url_name='schema'),
+        SpectacularSwaggerView.as_view(
+            url_name='schema'
+        ),
         name='swagger-ui'
     ),
 ]

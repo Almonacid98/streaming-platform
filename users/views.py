@@ -19,14 +19,14 @@ class UserViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'email']
 
-    # PERMISOS
+    # ==========================================
+    # PERMISOS DINÁMICOS
+    # ==========================================
     def get_permissions(self):
 
-        # Registro público
         if self.action == 'register':
             permission_classes = [AllowAny]
 
-        # Perfil requiere login
         elif self.action == 'profile':
             permission_classes = [IsAuthenticated]
 
@@ -35,18 +35,23 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return [permission() for permission in permission_classes]
 
+    # ==========================================
     # SERIALIZERS DINÁMICOS
+    # ==========================================
     def get_serializer_class(self):
 
         if self.action == 'register':
             return RegisterSerializer
 
-        if self.action == 'profile':
+        elif self.action == 'profile':
             return ProfileSerializer
 
         return UserSerializer
 
-    # ENDPOINT REGISTRO
+    # ==========================================
+    # REGISTRO DE USUARIOS
+    # POST /api/users/register/
+    # ==========================================
     @action(
         detail=False,
         methods=['post'],
@@ -54,22 +59,25 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def register(self, request):
 
-        serializer = RegisterSerializer(data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
+        serializer = self.get_serializer(
+            data=request.data
         )
 
-    # ENDPOINT PERFIL
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        serializer.save()
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED
+        )
+
+    # ==========================================
+    # PERFIL DEL USUARIO AUTENTICADO
+    # GET /api/users/profile/
+    # ==========================================
     @action(
         detail=False,
         methods=['get'],
@@ -77,6 +85,10 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def profile(self, request):
 
-        serializer = ProfileSerializer(request.user)
+        serializer = self.get_serializer(
+            request.user
+        )
 
-        return Response(serializer.data)
+        return Response(
+            serializer.data
+        )

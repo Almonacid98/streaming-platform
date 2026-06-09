@@ -1,17 +1,25 @@
 from rest_framework import serializers
 from .models import User
 
+
+# ==========================================
 # SERIALIZER GENERAL
+# ==========================================
 class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
         fields = '__all__'
 
+
+# ==========================================
 # REGISTRO DE USUARIOS
+# ==========================================
 class RegisterSerializer(serializers.ModelSerializer):
 
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(
+        write_only=True
+    )
 
     class Meta:
         model = User
@@ -28,19 +36,28 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         password = validated_data.pop('password')
+
         user = User(**validated_data)
-        # Hashea contraseña
+
+        # Hashear contraseña
         user.set_password(password)
+
         # Rol por defecto
-        user.rol = 'usuario'
+        user.rol = User.Roles.USUARIO
+
         user.save()
+
         return user
 
+
+# ==========================================
 # PERFIL DEL USUARIO
+# ==========================================
 class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
+
         fields = (
             'id',
             'username',
@@ -50,3 +67,5 @@ class ProfileSerializer(serializers.ModelSerializer):
             'rol',
             'fecha_creacion',
         )
+
+        read_only_fields = fields
