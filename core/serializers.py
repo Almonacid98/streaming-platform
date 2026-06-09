@@ -7,39 +7,49 @@ from users.models import User
 class UserBasicSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'rol']
+        fields = [
+            'id',
+            'username',
+            'email',
+            'rol'
+        ]
 
 
 class ContenidoSerializer(serializers.ModelSerializer):
-    creador = UserBasicSerializer(read_only=True)
 
-    creador_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        source='creador',
-        write_only=True
-    )
+    creador = UserBasicSerializer(read_only=True)
 
     class Meta:
         model = Contenido
-        fields = '__all__'
+        fields = [
+            'id',
+            'titulo',
+            'tipo',
+            'genero',
+            'anio',
+            'duracion_min',
+            'creador',
+        ]
+        read_only_fields = [
+            'id',
+            'creador',
+        ]
 
 
 class VisualizacionSerializer(serializers.ModelSerializer):
+
     usuario = UserBasicSerializer(read_only=True)
-    contenido = ContenidoSerializer(read_only=True)
-
-    usuario_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        source='usuario',
-        write_only=True
-    )
-
-    contenido_id = serializers.PrimaryKeyRelatedField(
-        queryset=Contenido.objects.all(),
-        source='contenido',
-        write_only=True
-    )
 
     class Meta:
         model = Visualizacion
-        fields = '__all__'
+        fields = [
+            'id',
+            'usuario',
+            'contenido',
+            'fecha_visualizacion',
+        ]
+        read_only_fields = [
+            'id',
+            'usuario',
+            'fecha_visualizacion',
+        ]

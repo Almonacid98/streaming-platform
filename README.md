@@ -200,3 +200,107 @@ Levanta el servidor Django.
 ```
 
 ------------------------------------------------------------------------
+
+# 🔐 Autenticación con JWT
+
+## ¿Por qué se eligió JWT en lugar de sesiones tradicionales?
+
+En este proyecto se implementó autenticación basada en **JSON Web Tokens (JWT)** utilizando la librería **SimpleJWT** para Django REST Framework.
+
+Se eligió JWT sobre el sistema tradicional de sesiones por las siguientes razones:
+
+### Ventajas de JWT
+
+* **Arquitectura RESTful:** la API está diseñada para ser consumida por aplicaciones web, móviles o microservicios, por lo que resulta conveniente utilizar un mecanismo de autenticación independiente del estado del servidor.
+* **Escalabilidad:** los tokens contienen la información necesaria para identificar al usuario, evitando almacenar sesiones activas en el servidor.
+* **Desacoplamiento entre cliente y servidor:** cualquier cliente autorizado puede autenticarse enviando el token en cada solicitud HTTP.
+* **Compatibilidad con microservicios:** JWT es ampliamente utilizado en arquitecturas distribuidas y facilita la comunicación segura entre servicios.
+* **Mayor flexibilidad para aplicaciones frontend modernas:** permite integrar fácilmente frameworks como React, Angular o aplicaciones móviles.
+
+### Funcionamiento
+
+1. El usuario inicia sesión mediante el endpoint:
+
+```http
+POST /api/token/
+```
+
+2. El sistema genera:
+
+   * **Access Token:** utilizado para acceder a recursos protegidos.
+   * **Refresh Token:** utilizado para obtener nuevos access tokens cuando estos expiran.
+
+3. El cliente envía el Access Token en el encabezado:
+
+```http
+Authorization: Bearer <token>
+```
+
+4. El servidor valida el token y autoriza la solicitud.
+
+---
+
+# 🚪 Logout y Blacklist de Tokens
+
+## ¿Qué es la Blacklist?
+
+Dado que JWT es un mecanismo **stateless**, el servidor no mantiene sesiones activas de los usuarios.
+
+Por este motivo, cuando un usuario cierra sesión no es posible eliminar directamente un token ya emitido. Para resolver este problema se utiliza una **Blacklist de Tokens**.
+
+La blacklist consiste en un registro de tokens revocados que ya no pueden utilizarse para obtener nuevas credenciales.
+
+## Funcionamiento del Logout
+
+El endpoint de cierre de sesión es:
+
+```http
+POST /api/logout/
+```
+
+El usuario envía su **Refresh Token** y el sistema:
+
+1. Valida el token recibido.
+2. Lo agrega a la blacklist.
+3. Impide que vuelva a utilizarse para generar nuevos Access Tokens.
+
+### Flujo de ejemplo
+
+```text
+Login
+│
+├── Access Token
+└── Refresh Token
+        │
+        ▼
+      Logout
+        │
+        ▼
+Refresh Token → Blacklist
+        │
+        ▼
+No puede volver a utilizarse
+```
+
+## Resultado esperado
+
+Si un usuario intenta refrescar un token revocado:
+
+```http
+POST /api/token/refresh/
+```
+
+el sistema responde:
+
+```http
+401 Unauthorized
+```
+
+indicando que el token fue revocado correctamente.
+
+## Beneficios
+
+* Mayor seguridad ante robo o reutilización de tokens.
+* Permite invalidar credenciales antes de su fecha de expiración.
+* Implementa un mecanismo de cierre de sesión compatible con JWT.
+* Facilita el control de acceso en APIs REST modernas.

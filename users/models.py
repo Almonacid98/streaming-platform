@@ -4,24 +4,47 @@ from django.db import models
 
 class User(AbstractUser):
 
-    ROL_CHOICES = (
-        ('usuario', 'Usuario'),
-        ('creador', 'Creador'),
-    )
+    class Roles(models.TextChoices):
+        ADMIN = "admin", "Admin"
+        USUARIO = "usuario", "Usuario"
+        CREADOR = "creador", "Creador"
 
-    edad = models.IntegerField(null=True, blank=True)
+    class Generos(models.TextChoices):
+        MASCULINO = 'masculino', 'Masculino'
+        FEMENINO = 'femenino', 'Femenino'
+        OTRO = 'otro', 'Otro'
+        PREFIERO_NO_DECIR = 'no_decir', 'Prefiero no decir'
 
-    genero = models.CharField(
-        max_length=50,
+    edad = models.IntegerField(
         null=True,
         blank=True
     )
 
-    rol = models.CharField(
-        max_length=10,
-        choices=ROL_CHOICES,
-        default='usuario'
+    genero = models.CharField(
+        max_length=20,
+        choices=Generos.choices,
+        blank=True,
+        null=True
     )
 
+    rol = models.CharField(
+        max_length=20,
+        choices=Roles.choices,
+        default=Roles.USUARIO
+    )
+
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def es_admin(self):
+        return self.rol == self.Roles.ADMIN
+
+    def es_creador(self):
+        return self.rol == self.Roles.CREADOR
+
+    def es_usuario(self):
+        return self.rol == self.Roles.USUARIO
+
     def __str__(self):
-        return self.username
+        return f"{self.username} ({self.rol})"
