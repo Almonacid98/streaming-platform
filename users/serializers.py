@@ -1,20 +1,14 @@
 from rest_framework import serializers
 from .models import User
 
-
-# ==========================================
 # SERIALIZER GENERAL
-# ==========================================
 class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
         fields = '__all__'
 
-
-# ==========================================
 # REGISTRO DE USUARIOS
-# ==========================================
 class RegisterSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(
@@ -49,10 +43,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return user
 
-
-# ==========================================
 # PERFIL DEL USUARIO
-# ==========================================
 class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -70,10 +61,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         read_only_fields = fields
 
-
-# ==========================================
 # LOGOUT JWT
-# ==========================================
 class LogoutSerializer(serializers.Serializer):
 
     refresh = serializers.CharField()

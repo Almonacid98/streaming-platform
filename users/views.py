@@ -23,9 +23,7 @@ class UserViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'email']
 
-    # ==========================================
     # PERMISOS DINÁMICOS
-    # ==========================================
     def get_permissions(self):
 
         if self.action == 'register':
@@ -39,9 +37,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return [permission() for permission in permission_classes]
 
-    # ==========================================
     # SERIALIZERS DINÁMICOS
-    # ==========================================
     def get_serializer_class(self):
 
         if self.action == 'register':
@@ -52,10 +48,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return UserSerializer
 
-    # ==========================================
     # REGISTRO DE USUARIOS
     # POST /api/users/register/
-    # ==========================================
     @action(
         detail=False,
         methods=['post'],
@@ -77,11 +71,8 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.data,
             status=status.HTTP_201_CREATED
         )
-
-    # ==========================================
     # PERFIL DEL USUARIO AUTENTICADO
     # GET /api/users/profile/
-    # ==========================================
     @action(
         detail=False,
         methods=['get'],
@@ -97,11 +88,8 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.data
         )
 
-
-# ==========================================
 # LOGOUT JWT + BLACKLIST
 # POST /api/logout/
-# ==========================================
 @extend_schema(
     request=LogoutSerializer,
     responses={205: None}
