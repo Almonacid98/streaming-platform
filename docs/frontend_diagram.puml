@@ -1,0 +1,42 @@
+@startmindmap
+title Streaming Platform - Frontend Architecture (TP5)
+
+* React Application
+** App
+*** Navbar
+**** Logo
+**** Navigation Menu
+**** User Menu
+
+*** Pages
+**** Home
+***** HeroBanner
+***** SearchBar
+***** CategoryList
+***** ContentGrid
+****** ContentCard
+****** ContentCard
+****** ContentCard
+***** Footer
+
+**** Login
+
+**** Register
+
+**** Profile
+
+**** ContentDetail
+
+**** AdminPanel
+
+**** NotFound
+
+*** Services
+**** API (Axios / Fetch)
+
+*** Assets
+**** Images
+**** Icons
+**** CSS
+
+@endmindmap

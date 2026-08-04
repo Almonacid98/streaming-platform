@@ -304,3 +304,69 @@ indicando que el token fue revocado correctamente.
 * Permite invalidar credenciales antes de su fecha de expiración.
 * Implementa un mecanismo de cierre de sesión compatible con JWT.
 * Facilita el control de acceso en APIs REST modernas.
+---
+
+# TP5 - Inicio del Proyecto React
+
+## Descripción
+
+En este trabajo práctico se inició el desarrollo del frontend de la plataforma de streaming utilizando **React** y **Vite**, manteniendo una arquitectura de dos capas donde el backend desarrollado en Django expone una API REST y el cliente React consume dichos servicios mediante peticiones HTTP.
+
+Se creó el directorio `frontend/` dentro del mismo repositorio para mantener versionados conjuntamente el backend y el frontend, siguiendo una organización utilizada habitualmente en proyectos profesionales.
+
+Además, se configuró el servidor de desarrollo para ejecutarse en el puerto **3000**, facilitando la futura integración con la API desarrollada previamente.
+
+---
+
+## Arquitectura inicial
+
+Como parte del diseño del proyecto se definió una primera estructura de componentes para la aplicación React.
+
+La organización contempla páginas independientes, componentes reutilizables y una capa destinada a la comunicación con la API del backend.
+
+Esta estructura permitirá incorporar posteriormente funcionalidades como autenticación JWT, visualización de contenidos, búsquedas, perfiles de usuario y paneles administrativos sin necesidad de realizar grandes modificaciones sobre la arquitectura inicial.
+
+### Diagrama de componentes
+
+![Frontend Architecture](docs/frontend_diagram.png)
+
+---
+
+## Componentes previstos
+
+- App
+- Navbar
+- Home
+- HeroBanner
+- SearchBar
+- CategoryList
+- ContentGrid
+- ContentCard
+- Login
+- Register
+- Profile
+- ContentDetail
+- AdminPanel
+- Footer
+- API Service
+
+---
+
+## Tecnologías incorporadas
+
+- React
+- Vite
+- JavaScript
+- ESLint
+
+---
+
+## Estado del proyecto
+
+✔ Backend Django completamente funcional.
+
+✔ Frontend React inicializado correctamente.
+
+✔ Servidor de desarrollo configurado en **http://localhost:3000**.
+
+✔ Arquitectura inicial documentada para comenzar el desarrollo de la interfaz de usuario en los próximos trabajos prácticos.
