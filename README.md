@@ -364,6 +364,9 @@ Esta estructura permitirá incorporar posteriormente funcionalidades como autent
 ## Estado del proyecto
 
 ✔ Backend Django completamente funcional.
+
 ✔ Frontend React inicializado correctamente.
+
 ✔ Servidor de desarrollo configurado en **http://localhost:3000**.
+
 ✔ Arquitectura inicial documentada para comenzar el desarrollo de la interfaz de usuario en los próximos trabajos prácticos.
