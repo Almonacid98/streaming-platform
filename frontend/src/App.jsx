@@ -1,13 +1,7 @@
-function App() {
-  return (
-    <div className="container text-center py-5">
-      <h1 className="mb-4">Streaming Platform</h1>
+import Home from './views/Home'
 
-      <button className="btn btn-primary">
-        Bootstrap funciona
-      </button>
-    </div>
-  )
+function App() {
+  return <Home />
 }
 
 export default App
