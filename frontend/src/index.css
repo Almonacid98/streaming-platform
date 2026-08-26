@@ -38,18 +38,129 @@ a {
   background-color: #0b0b0b !important;
 }
 
-.navbar-brand {
-  color: #e50914 !important;
-  font-size: 1.5rem;
-  font-weight: 700;
+
+/* ================================
+   LOGO STREAM PLATFORM
+================================ */
+
+.streaming-logo {
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 5px 0;
+
+  font-size: 1.55rem !important;
+  font-weight: 900 !important;
+
+  letter-spacing: 2px;
+  text-transform: uppercase;
+
+  transition:
+    transform 0.3s ease,
+    filter 0.3s ease;
 }
+
+.logo-stream {
+  color: #ffffff;
+
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+.logo-platform {
+  color: #e50914;
+
+  font-weight: 900;
+
+  text-shadow:
+    0 0 8px rgba(229, 9, 20, 0.55);
+
+  animation: platformGlow 3s ease-in-out infinite;
+}
+
+.streaming-logo::after {
+  content: '';
+
+  position: absolute;
+
+  left: 0;
+  bottom: 0;
+
+  width: 100%;
+  height: 2px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      #e50914 30%,
+      #ff3440 50%,
+      #e50914 70%,
+      transparent 100%
+    );
+
+  transform: scaleX(0);
+  transform-origin: center;
+
+  opacity: 0;
+
+  box-shadow:
+    0 0 8px rgba(229, 9, 20, 0.8);
+
+  transition:
+    transform 0.4s ease,
+    opacity 0.4s ease;
+}
+
+.streaming-logo:hover {
+  transform: scale(1.04);
+
+  filter: brightness(1.15);
+}
+
+.streaming-logo:hover::after {
+  transform: scaleX(1);
+
+  opacity: 1;
+}
+
+@keyframes platformGlow {
+
+  0%,
+  100% {
+    text-shadow:
+      0 0 5px rgba(229, 9, 20, 0.4);
+  }
+
+  50% {
+    text-shadow:
+      0 0 8px rgba(229, 9, 20, 0.9),
+      0 0 18px rgba(229, 9, 20, 0.4);
+  }
+}
+
+
+/* ================================
+   LINKS DEL NAVBAR
+================================ */
 
 .navbar .nav-link {
   color: #d6d6d6 !important;
-  transition: color 0.2s ease;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
-.navbar .nav-link:hover,
+.navbar .nav-link:hover {
+  color: #ffffff !important;
+
+  transform: translateY(-1px);
+}
+
 .navbar .nav-link.active {
   color: #ffffff !important;
 }
@@ -70,11 +181,13 @@ a {
   align-items: center;
 
   position: relative;
+
   overflow: hidden;
 }
 
 .hero-section h1 {
   color: #ffffff;
+
   font-size: 4rem;
   font-weight: 800;
 
@@ -84,12 +197,36 @@ a {
 
 .hero-section p {
   max-width: 650px;
+
   color: #d6d6d6;
 }
 
 .hero-genre {
   color: #cccccc;
+
   font-weight: 600;
+}
+
+
+/* ================================
+   HERO - ANIMACIÓN DEL CONTENIDO
+================================ */
+
+.hero-content {
+  animation: heroFade 0.6s ease;
+}
+
+@keyframes heroFade {
+
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 
@@ -99,6 +236,7 @@ a {
 
 .hero-arrow {
   position: absolute;
+
   top: 0;
   bottom: 0;
 
@@ -180,6 +318,7 @@ a {
 .hero-arrow:focus,
 .hero-arrow:active {
   outline: none;
+
   box-shadow: none;
 }
 
@@ -197,6 +336,7 @@ a {
   transform: translateX(-50%);
 
   display: flex;
+
   gap: 8px;
 
   z-index: 20;
@@ -211,7 +351,8 @@ a {
   border: none;
   border-radius: 50%;
 
-  background-color: rgba(255, 255, 255, 0.45);
+  background-color:
+    rgba(255, 255, 255, 0.45);
 
   cursor: pointer;
 
@@ -226,6 +367,7 @@ a {
 
 .hero-dot.active {
   background-color: #e50914;
+
   transform: scale(1.35);
 }
 
@@ -236,6 +378,7 @@ a {
 
 .btn-streaming {
   background-color: #e50914;
+
   color: #ffffff;
 
   border: none;
@@ -244,14 +387,19 @@ a {
 
   transition:
     background-color 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .btn-streaming:hover {
   background-color: #f6121d;
+
   color: #ffffff;
 
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 20px rgba(229, 9, 20, 0.35);
 }
 
 
@@ -261,6 +409,7 @@ a {
 
 .content-section {
   background-color: #141414;
+
   color: #ffffff;
 
   overflow: hidden;
@@ -281,12 +430,14 @@ a {
 
 .streaming-slider {
   display: flex;
+
   gap: 18px;
 
   overflow-x: auto;
   overflow-y: hidden;
 
   scroll-behavior: smooth;
+
   scroll-snap-type: x mandatory;
 
   padding: 12px 4px 28px;
@@ -313,6 +464,7 @@ a {
   background-color: #1c1c1c;
 
   border: 1px solid #2a2a2a;
+
   border-radius: 10px;
 
   overflow: hidden;
@@ -329,23 +481,27 @@ a {
 }
 
 .streaming-card:hover {
-  transform: translateY(-8px) scale(1.025);
+  transform:
+    translateY(-8px)
+    scale(1.025);
 
   border-color: #444;
 
   box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.7);
+    0 18px 40px
+    rgba(0, 0, 0, 0.7);
 }
 
 
 /* ================================
-   IMAGEN
+   IMAGEN DE CARD
 ================================ */
 
 .streaming-card-image {
   position: relative;
 
   width: 100%;
+
   aspect-ratio: 16 / 9;
 
   overflow: hidden;
@@ -355,11 +511,13 @@ a {
 
 .streaming-card-image img {
   width: 100%;
+
   height: 100%;
 
   object-fit: cover;
 
-  transition: transform 0.45s ease;
+  transition:
+    transform 0.45s ease;
 }
 
 .streaming-card:hover .streaming-card-image img {
@@ -368,10 +526,13 @@ a {
 
 .streaming-card-placeholder {
   width: 100%;
+
   height: 100%;
 
   display: flex;
+
   justify-content: center;
+
   align-items: center;
 
   background:
@@ -388,7 +549,7 @@ a {
 
 
 /* ================================
-   ETIQUETA TIPO
+   ETIQUETA PELÍCULA / SERIE
 ================================ */
 
 .streaming-card-type {
@@ -399,13 +560,15 @@ a {
 
   padding: 4px 8px;
 
-  background-color: rgba(0, 0, 0, 0.82);
+  background-color:
+    rgba(0, 0, 0, 0.82);
 
   border-radius: 4px;
 
   color: #ffffff;
 
   font-size: 0.75rem;
+
   font-weight: 700;
 }
 
@@ -420,6 +583,7 @@ a {
   flex-grow: 1;
 
   display: flex;
+
   flex-direction: column;
 }
 
@@ -427,6 +591,7 @@ a {
   color: #ffffff;
 
   font-size: 1.15rem;
+
   font-weight: 700;
 
   margin-bottom: 4px;
@@ -436,6 +601,7 @@ a {
   color: #e50914;
 
   font-size: 0.85rem;
+
   font-weight: 600;
 
   margin-bottom: 12px;
@@ -445,6 +611,7 @@ a {
   color: #a9a9a9;
 
   font-size: 0.9rem;
+
   line-height: 1.5;
 
   margin-bottom: 18px;
@@ -459,24 +626,31 @@ a {
   position: absolute;
 
   top: 50%;
-  transform: translateY(-50%);
+
+  transform:
+    translateY(-50%);
 
   z-index: 20;
 
   width: 50px;
+
   height: 100px;
 
   border: none;
 
-  background-color: rgba(0, 0, 0, 0.72);
+  background-color:
+    rgba(0, 0, 0, 0.72);
 
   color: #ffffff;
 
   font-size: 3rem;
+
   line-height: 1;
 
   display: flex;
+
   justify-content: center;
+
   align-items: center;
 
   opacity: 0;
@@ -493,7 +667,8 @@ a {
 }
 
 .slider-button:hover {
-  background-color: rgba(0, 0, 0, 0.95);
+  background-color:
+    rgba(0, 0, 0, 0.95);
 }
 
 .slider-button-left {
@@ -523,6 +698,7 @@ a {
 
 footer {
   background-color: #0b0b0b !important;
+
   color: #888;
 }
 
@@ -535,6 +711,7 @@ footer {
 
   .hero-section {
     min-height: 550px;
+
     background-position: 65% center;
   }
 
@@ -545,7 +722,6 @@ footer {
   .streaming-card {
     flex: 0 0 290px;
   }
-
 }
 
 
@@ -554,6 +730,14 @@ footer {
 ================================ */
 
 @media (max-width: 768px) {
+
+  .streaming-logo {
+    font-size: 1.25rem !important;
+
+    letter-spacing: 1.5px;
+
+    gap: 6px;
+  }
 
   .hero-section {
     min-height: 500px;
@@ -574,11 +758,6 @@ footer {
     margin-right: auto;
   }
 
-  /*
-     En celular ocultamos las flechas del hero.
-     El hero sigue cambiando automáticamente y
-     se pueden utilizar los indicadores inferiores.
-  */
   .hero-arrow {
     display: none;
   }
@@ -588,10 +767,6 @@ footer {
   }
 
   .streaming-card {
-    /*
-      La tarjeta ocupa buena parte de la pantalla,
-      dejando visible una parte de la siguiente.
-    */
     flex: 0 0 82%;
   }
 
@@ -603,14 +778,9 @@ footer {
     padding-bottom: 20px;
   }
 
-  /*
-     En móvil el carrusel se mueve deslizando
-     directamente con el dedo.
-  */
   .slider-button {
     display: none;
   }
-
 }
 
 
@@ -619,6 +789,14 @@ footer {
 ================================ */
 
 @media (max-width: 480px) {
+
+  .streaming-logo {
+    font-size: 1.1rem !important;
+
+    letter-spacing: 1px;
+
+    gap: 5px;
+  }
 
   .hero-section {
     min-height: 460px;
@@ -631,5 +809,4 @@ footer {
   .streaming-card {
     flex: 0 0 88%;
   }
-
 }

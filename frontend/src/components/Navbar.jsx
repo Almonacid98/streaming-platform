@@ -3,8 +3,9 @@ function Navbar() {
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container">
 
-        <a className="navbar-brand fw-bold" href="#">
-          Streaming Platform
+        <a className="navbar-brand streaming-logo" href="#">
+          <span className="logo-stream">STREAM</span>
+          <span className="logo-platform">PLATFORM</span>
         </a>
 
         <button
@@ -51,6 +52,7 @@ function Navbar() {
 
           </ul>
         </div>
+
       </div>
     </nav>
   )
