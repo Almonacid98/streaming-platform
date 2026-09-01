@@ -12,39 +12,28 @@ import ProtectedRoute from './components/ProtectedRoute'
 
 
 function App() {
-
   return (
-
     <Routes>
 
-      {/* LOGIN */}
       <Route
         path="/login"
         element={<Login />}
       />
 
-
-      {/* REGISTRO */}
       <Route
         path="/register"
         element={<Register />}
       />
 
-
-      {/* HOME PROTEGIDA */}
       <Route
         path="/"
         element={
           <ProtectedRoute>
-
             <Home />
-
           </ProtectedRoute>
         }
       />
 
-
-      {/* CUALQUIER OTRA URL */}
       <Route
         path="*"
         element={
@@ -56,9 +45,7 @@ function App() {
       />
 
     </Routes>
-
   )
 }
-
 
 export default App

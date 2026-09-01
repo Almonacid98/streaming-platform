@@ -9,14 +9,12 @@ function ProtectedRoute({ children }) {
 
 
   if (!usuario) {
-
     return (
       <Navigate
         to="/login"
         replace
       />
     )
-
   }
 
 

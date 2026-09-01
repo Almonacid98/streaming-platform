@@ -1,12 +1,15 @@
-import { createContext, useContext, useState } from 'react'
+import {
+  createContext,
+  useContext,
+  useState
+} from 'react'
 
 
-const AuthContext = createContext()
+const AuthContext = createContext(null)
 
 
 export function AuthProvider({ children }) {
 
-  // USUARIOS HARDCODEADOS
   const [usuarios, setUsuarios] = useState([
     {
       id: 1,
@@ -23,35 +26,33 @@ export function AuthProvider({ children }) {
   ])
 
 
-  // Usuario actualmente autenticado
   const [usuario, setUsuario] = useState(null)
 
-  // LOGIN
+
   const login = (username, password) => {
 
     const usuarioEncontrado = usuarios.find(
-      (usuario) =>
-        usuario.username === username &&
-        usuario.password === password
+      (item) =>
+        item.username === username &&
+        item.password === password
     )
 
-    if (usuarioEncontrado) {
-
-      setUsuario(usuarioEncontrado)
-
-      return true
+    if (!usuarioEncontrado) {
+      return false
     }
 
-    return false
+    setUsuario(usuarioEncontrado)
+
+    return true
   }
 
-  // REGISTRO
+
   const register = (nuevoUsuario) => {
 
     const usuarioExistente = usuarios.find(
-      (usuario) =>
-        usuario.username === nuevoUsuario.username ||
-        usuario.email === nuevoUsuario.email
+      (item) =>
+        item.username === nuevoUsuario.username ||
+        item.email === nuevoUsuario.email
     )
 
     if (usuarioExistente) {
@@ -68,8 +69,8 @@ export function AuthProvider({ children }) {
     }
 
 
-    setUsuarios([
-      ...usuarios,
+    setUsuarios((usuariosActuales) => [
+      ...usuariosActuales,
       usuarioCreado
     ])
 
@@ -79,9 +80,8 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // LOGOUT
-  const logout = () => {
 
+  const logout = () => {
     setUsuario(null)
   }
 
@@ -96,9 +96,7 @@ export function AuthProvider({ children }) {
         logout
       }}
     >
-
       {children}
-
     </AuthContext.Provider>
   )
 }
@@ -106,5 +104,13 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
 
-  return useContext(AuthContext)
+  const context = useContext(AuthContext)
+
+  if (!context) {
+    throw new Error(
+      'useAuth debe utilizarse dentro de AuthProvider'
+    )
+  }
+
+  return context
 }
