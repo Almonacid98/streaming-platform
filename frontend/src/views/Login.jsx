@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import AuthBackground from '../components/AuthBackground'
 import {
   Link,
   useNavigate
@@ -47,7 +48,7 @@ function Login() {
 
 
   return (
-    <main className="auth-page">
+    <AuthBackground>
 
       <div className="container">
 
@@ -167,7 +168,7 @@ function Login() {
 
       </div>
 
-    </main>
+    </AuthBackground>
   )
 }
 
