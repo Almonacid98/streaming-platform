@@ -1,243 +1,357 @@
 /* ================================
+
    ESTILOS GENERALES
+
 ================================ */
 
 :root {
+
   font-family: Arial, Helvetica, sans-serif;
+
   color: #ffffff;
+
   background-color: #141414;
+
 }
 
 html,
+
 body {
+
   margin: 0;
+
   padding: 0;
+
   min-width: 320px;
+
   background-color: #141414;
+
 }
 
 body {
+
   color: #ffffff;
+
 }
 
 #root {
+
   min-height: 100vh;
+
   background-color: #141414;
+
 }
 
 a {
+
   text-decoration: none;
+
 }
 
 
+
 /* ================================
+
    NAVBAR
+
 ================================ */
 
 .navbar {
+
   background-color: #0b0b0b !important;
+
 }
 
 
+
 /* ================================
+
    LOGO STREAM PLATFORM
+
 ================================ */
 
 .streaming-logo {
+
   position: relative;
 
   display: inline-flex;
+
   align-items: center;
+
   gap: 8px;
 
   padding: 5px 0;
 
   font-size: 1.55rem !important;
+
   font-weight: 900 !important;
 
   letter-spacing: 2px;
+
   text-transform: uppercase;
 
   transition:
+
     transform 0.3s ease,
+
     filter 0.3s ease;
+
 }
 
 .logo-stream {
+
   color: #ffffff;
 
   text-shadow:
+
     0 0 8px rgba(255, 255, 255, 0.15);
+
 }
 
 .logo-platform {
+
   color: #e50914;
 
   font-weight: 900;
 
   text-shadow:
+
     0 0 8px rgba(229, 9, 20, 0.55);
 
   animation: platformGlow 3s ease-in-out infinite;
+
 }
 
 .streaming-logo::after {
+
   content: '';
 
   position: absolute;
 
   left: 0;
+
   bottom: 0;
 
   width: 100%;
+
   height: 2px;
 
   background:
+
     linear-gradient(
+
       90deg,
+
       transparent 0%,
+
       #e50914 30%,
+
       #ff3440 50%,
+
       #e50914 70%,
+
       transparent 100%
+
     );
 
   transform: scaleX(0);
+
   transform-origin: center;
 
   opacity: 0;
 
   box-shadow:
+
     0 0 8px rgba(229, 9, 20, 0.8);
 
   transition:
+
     transform 0.4s ease,
+
     opacity 0.4s ease;
+
 }
 
 .streaming-logo:hover {
+
   transform: scale(1.04);
 
   filter: brightness(1.15);
+
 }
 
 .streaming-logo:hover::after {
+
   transform: scaleX(1);
 
   opacity: 1;
+
 }
 
 @keyframes platformGlow {
 
   0%,
+
   100% {
+
     text-shadow:
+
       0 0 5px rgba(229, 9, 20, 0.4);
+
   }
 
   50% {
+
     text-shadow:
+
       0 0 8px rgba(229, 9, 20, 0.9),
+
       0 0 18px rgba(229, 9, 20, 0.4);
+
   }
+
 }
 
 
+
 /* ================================
+
    LINKS DEL NAVBAR
+
 ================================ */
 
 .navbar .nav-link {
+
   color: #d6d6d6 !important;
 
   transition:
+
     color 0.2s ease,
+
     transform 0.2s ease;
+
 }
 
 .navbar .nav-link:hover {
+
   color: #ffffff !important;
 
   transform: translateY(-1px);
+
 }
 
 .navbar .nav-link.active {
+
   color: #ffffff !important;
+
 }
 
 
+
 /* ================================
+
    HERO
+
 ================================ */
 
 .hero-section {
+
   min-height: 620px;
 
   background-size: cover;
+
   background-position: center;
+
   background-repeat: no-repeat;
 
   display: flex;
+
   align-items: center;
 
   position: relative;
 
   overflow: hidden;
+
 }
 
 .hero-section h1 {
+
   color: #ffffff;
 
   font-size: 4rem;
+
   font-weight: 800;
 
   text-shadow:
+
     0 4px 20px rgba(0, 0, 0, 0.8);
+
 }
 
 .hero-section p {
+
   max-width: 650px;
 
   color: #d6d6d6;
+
 }
 
 .hero-genre {
+
   color: #cccccc;
 
   font-weight: 600;
+
 }
 
 
+
 /* ================================
+
    HERO - ANIMACIÓN DEL CONTENIDO
+
 ================================ */
 
 .hero-content {
+
   animation: heroFade 0.6s ease;
+
 }
 
 @keyframes heroFade {
 
   from {
+
     opacity: 0;
+
     transform: translateY(12px);
+
   }
 
   to {
+
     opacity: 1;
+
     transform: translateY(0);
+
   }
+
 }
 
 
+
 /* ================================
+
    HERO - FLECHAS LATERALES
+
 ================================ */
 
 .hero-arrow {
+
   position: absolute;
 
   top: 0;
+
   bottom: 0;
 
   z-index: 20;
@@ -245,16 +359,21 @@ a {
   width: 72px;
 
   border: none;
+
   outline: none;
 
   color: rgba(255, 255, 255, 0.88);
 
   font-size: 4rem;
+
   font-weight: 200;
+
   line-height: 1;
 
   display: flex;
+
   justify-content: center;
+
   align-items: center;
 
   cursor: pointer;
@@ -262,75 +381,119 @@ a {
   opacity: 0;
 
   transition:
+
     opacity 0.3s ease,
+
     color 0.2s ease,
-    background 0.3s ease;
+
+background 0.3s ease;
+
 }
 
 .hero-arrow-left {
+
   left: 0;
 
   background:
+
     linear-gradient(
+
       to right,
+
       rgba(0, 0, 0, 0.8),
+
       rgba(0, 0, 0, 0)
+
     );
+
 }
 
 .hero-arrow-right {
+
   right: 0;
 
   background:
+
     linear-gradient(
+
       to left,
+
       rgba(0, 0, 0, 0.8),
+
       rgba(0, 0, 0, 0)
+
     );
+
 }
 
 .hero-section:hover .hero-arrow {
+
   opacity: 1;
+
 }
 
 .hero-arrow:hover {
+
   color: #ffffff;
+
 }
 
 .hero-arrow-left:hover {
+
   background:
+
     linear-gradient(
+
       to right,
+
       rgba(0, 0, 0, 0.96),
+
       rgba(0, 0, 0, 0)
+
     );
+
 }
 
 .hero-arrow-right:hover {
+
   background:
+
     linear-gradient(
+
       to left,
+
       rgba(0, 0, 0, 0.96),
+
       rgba(0, 0, 0, 0)
+
     );
+
 }
 
 .hero-arrow:focus,
+
 .hero-arrow:active {
+
   outline: none;
 
   box-shadow: none;
+
 }
 
 
+
 /* ================================
+
    HERO - INDICADORES
+
 ================================ */
 
 .hero-indicators {
+
   position: absolute;
 
   bottom: 25px;
+
   left: 50%;
 
   transform: translateX(-50%);
@@ -340,43 +503,59 @@ a {
   gap: 8px;
 
   z-index: 20;
+
 }
 
 .hero-dot {
+
   width: 9px;
+
   height: 9px;
 
   padding: 0;
 
   border: none;
+
   border-radius: 50%;
 
   background-color:
+
     rgba(255, 255, 255, 0.45);
 
   cursor: pointer;
 
   transition:
+
     transform 0.2s ease,
+
     background-color 0.2s ease;
+
 }
 
 .hero-dot:hover {
+
   background-color: #ffffff;
+
 }
 
 .hero-dot.active {
+
   background-color: #e50914;
 
   transform: scale(1.35);
+
 }
 
 
+
 /* ================================
+
    BOTONES
+
 ================================ */
 
 .btn-streaming {
+
   background-color: #e50914;
 
   color: #ffffff;
@@ -386,12 +565,17 @@ a {
   font-weight: 600;
 
   transition:
+
     background-color 0.2s ease,
+
     transform 0.2s ease,
+
     box-shadow 0.2s ease;
+
 }
 
 .btn-streaming:hover {
+
   background-color: #f6121d;
 
   color: #ffffff;
@@ -399,41 +583,57 @@ a {
   transform: translateY(-2px);
 
   box-shadow:
+
     0 8px 20px rgba(229, 9, 20, 0.35);
+
 }
 
 
+
 /* ================================
+
    CONTENIDO DESTACADO
+
 ================================ */
 
 .content-section {
+
   background-color: #141414;
 
   color: #ffffff;
 
   overflow: hidden;
+
 }
 
 .content-section h2 {
+
   color: #ffffff;
+
 }
+
 
 
 /* ================================
+
    SLIDER
+
 ================================ */
 
 .streaming-slider-wrapper {
+
   position: relative;
+
 }
 
 .streaming-slider {
+
   display: flex;
 
   gap: 18px;
 
   overflow-x: auto;
+
   overflow-y: hidden;
 
   scroll-behavior: smooth;
@@ -447,18 +647,25 @@ a {
   -webkit-overflow-scrolling: touch;
 
   overscroll-behavior-x: contain;
+
 }
 
 .streaming-slider::-webkit-scrollbar {
+
   display: none;
+
 }
 
 
+
 /* ================================
+
    CARD
+
 ================================ */
 
 .streaming-card {
+
   flex: 0 0 300px;
 
   background-color: #1c1c1c;
@@ -470,34 +677,49 @@ a {
   overflow: hidden;
 
   display: flex;
+
   flex-direction: column;
 
   scroll-snap-align: start;
 
   transition:
+
     transform 0.3s ease,
+
     box-shadow 0.3s ease,
+
     border-color 0.3s ease;
+
 }
 
 .streaming-card:hover {
+
   transform:
+
     translateY(-8px)
+
     scale(1.025);
 
   border-color: #444;
 
   box-shadow:
+
     0 18px 40px
+
     rgba(0, 0, 0, 0.7);
+
 }
 
 
+
 /* ================================
+
    IMAGEN DE CARD
+
 ================================ */
 
 .streaming-card-image {
+
   position: relative;
 
   width: 100%;
@@ -507,9 +729,11 @@ a {
   overflow: hidden;
 
   background-color: #222;
+
 }
 
 .streaming-card-image img {
+
   width: 100%;
 
   height: 100%;
@@ -517,14 +741,19 @@ a {
   object-fit: cover;
 
   transition:
+
     transform 0.45s ease;
+
 }
 
 .streaming-card:hover .streaming-card-image img {
+
   transform: scale(1.08);
+
 }
 
 .streaming-card-placeholder {
+
   width: 100%;
 
   height: 100%;
@@ -536,31 +765,43 @@ a {
   align-items: center;
 
   background:
+
     linear-gradient(
+
       135deg,
+
       #292929,
+
       #171717
+
     );
 
   color: #777;
 
   font-size: 0.9rem;
+
 }
 
 
+
 /* ================================
+
    ETIQUETA PELÍCULA / SERIE
+
 ================================ */
 
 .streaming-card-type {
+
   position: absolute;
 
   top: 10px;
+
   left: 10px;
 
   padding: 4px 8px;
 
   background-color:
+
     rgba(0, 0, 0, 0.82);
 
   border-radius: 4px;
@@ -570,14 +811,19 @@ a {
   font-size: 0.75rem;
 
   font-weight: 700;
+
 }
 
 
+
 /* ================================
+
    INFORMACIÓN DE CARD
+
 ================================ */
 
 .streaming-card-body {
+
   padding: 18px;
 
   flex-grow: 1;
@@ -585,9 +831,11 @@ a {
   display: flex;
 
   flex-direction: column;
+
 }
 
 .streaming-card-title {
+
   color: #ffffff;
 
   font-size: 1.15rem;
@@ -595,9 +843,11 @@ a {
   font-weight: 700;
 
   margin-bottom: 4px;
+
 }
 
 .streaming-card-genre {
+
   color: #e50914;
 
   font-size: 0.85rem;
@@ -605,9 +855,11 @@ a {
   font-weight: 600;
 
   margin-bottom: 12px;
+
 }
 
 .streaming-card-description {
+
   color: #a9a9a9;
 
   font-size: 0.9rem;
@@ -615,19 +867,25 @@ a {
   line-height: 1.5;
 
   margin-bottom: 18px;
+
 }
 
 
+
 /* ================================
+
    FLECHAS DEL CARRUSEL
+
 ================================ */
 
 .slider-button {
+
   position: absolute;
 
   top: 50%;
 
   transform:
+
     translateY(-50%);
 
   z-index: 20;
@@ -639,6 +897,7 @@ a {
   border: none;
 
   background-color:
+
     rgba(0, 0, 0, 0.72);
 
   color: #ffffff;
@@ -658,155 +917,465 @@ a {
   cursor: pointer;
 
   transition:
+
     opacity 0.25s ease,
+
     background-color 0.25s ease;
+
 }
 
 .streaming-slider-wrapper:hover .slider-button {
+
   opacity: 1;
+
 }
 
 .slider-button:hover {
+
   background-color:
+
     rgba(0, 0, 0, 0.95);
+
 }
 
 .slider-button-left {
+
   left: 0;
 
   border-radius:
+
     0
+
     8px
+
     8px
+
     0;
+
 }
 
 .slider-button-right {
+
   right: 0;
 
   border-radius:
+
     8px
+
     0
+
     0
+
     8px;
+
 }
 
 
+
 /* ================================
+
    FOOTER
+
 ================================ */
 
 footer {
+
   background-color: #0b0b0b !important;
 
   color: #888;
+
 }
 
 
+
 /* ================================
+
    TABLET
+
 ================================ */
 
 @media (max-width: 992px) {
 
   .hero-section {
+
     min-height: 550px;
 
     background-position: 65% center;
+
   }
 
   .hero-section h1 {
+
     font-size: 3.2rem;
+
   }
 
   .streaming-card {
+
     flex: 0 0 290px;
+
   }
+
 }
 
 
+
 /* ================================
+
    MÓVIL
+
 ================================ */
 
 @media (max-width: 768px) {
 
   .streaming-logo {
+
     font-size: 1.25rem !important;
 
     letter-spacing: 1.5px;
 
     gap: 6px;
+
   }
 
   .hero-section {
+
     min-height: 500px;
 
     background-position: 68% center;
 
     text-align: center;
+
   }
 
   .hero-section h1 {
+
     font-size: 2.7rem;
+
   }
 
   .hero-section p {
+
     font-size: 1rem;
 
     margin-left: auto;
+
     margin-right: auto;
+
   }
 
   .hero-arrow {
+
     display: none;
+
   }
 
   .hero-indicators {
+
     bottom: 15px;
+
   }
 
   .streaming-card {
+
     flex: 0 0 82%;
+
   }
 
   .streaming-slider {
+
     gap: 12px;
 
     padding-left: 4px;
+
     padding-right: 15px;
+
     padding-bottom: 20px;
+
   }
 
   .slider-button {
+
     display: none;
+
   }
+
 }
 
 
+
 /* ================================
+
    MÓVILES PEQUEÑOS
+
 ================================ */
 
 @media (max-width: 480px) {
 
   .streaming-logo {
+
     font-size: 1.1rem !important;
 
     letter-spacing: 1px;
 
     gap: 5px;
+
   }
 
   .hero-section {
+
     min-height: 460px;
+
   }
 
   .hero-section h1 {
+
     font-size: 2.2rem;
+
   }
 
   .streaming-card {
+
     flex: 0 0 88%;
+
+  }
+
+}
+
+/* ================================
+   LOGIN / REGISTRO
+================================ */
+
+.auth-page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background-color: #141414;
+}
+
+
+/* ================================
+   FONDO DINÁMICO
+================================ */
+
+.auth-background {
+  position: absolute;
+
+  inset: -30px;
+
+  z-index: 0;
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  filter: brightness(1.15) saturate(1.1);
+
+  animation:
+    authBackgroundEnter 1s ease,
+    authBackgroundZoom 10s ease-in-out infinite alternate;
+}
+
+@keyframes authBackgroundEnter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+
+@keyframes authBackgroundZoom {
+  from {
+    transform: scale(1.06);
+  }
+
+  to {
+    transform: scale(1.14);
+  }
+}
+
+
+/* ================================
+   CAPA OSCURA
+================================ */
+
+.auth-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 1;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.25),
+      rgba(0, 0, 0, 0.55)
+    ),
+    linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.35),
+      rgba(0, 0, 0, 0.10),
+      rgba(0, 0, 0, 0.35)
+    );
+
+  backdrop-filter: blur(1px);
+}
+
+/* ================================
+   CONTENIDO DEL LOGIN / REGISTRO
+================================ */
+
+.auth-content {
+  position: relative;
+  z-index: 2;
+
+  min-height: 100vh;
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  padding: 40px 0;
+}
+
+
+/* ================================
+   TARJETA
+================================ */
+
+.auth-card {
+  padding: 40px;
+
+  background-color: rgba(20, 20, 20, 0.90);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.65);
+
+  backdrop-filter: blur(10px);
+
+  animation: authCardEnter 0.6s ease;
+}
+
+
+@keyframes authCardEnter {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(20px)
+      scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* ================================
+   LOGO
+================================ */
+
+.auth-logo {
+  color: #ffffff;
+
+  font-size: 1.6rem;
+  font-weight: 900;
+
+  letter-spacing: 2px;
+}
+
+
+.auth-logo span {
+  color: #e50914;
+
+  text-shadow:
+    0 0 10px rgba(229, 9, 20, 0.5);
+}
+
+
+/* ================================
+   LABELS
+================================ */
+
+.auth-card .form-label {
+  color: #dddddd;
+
+  font-weight: 600;
+}
+
+
+/* ================================
+   INPUTS
+================================ */
+
+.auth-input {
+  min-height: 48px;
+
+  background-color: #242424;
+
+  border: 1px solid #444;
+
+  color: #ffffff;
+}
+
+
+.auth-input:focus {
+  background-color: #242424;
+
+  color: #ffffff;
+
+  border-color: #e50914;
+
+  box-shadow:
+    0 0 0 0.2rem rgba(229, 9, 20, 0.15);
+}
+
+
+.auth-input::placeholder {
+  color: #888;
+}
+
+
+/* ================================
+   LINKS
+================================ */
+
+.auth-link {
+  color: #e50914;
+
+  font-weight: 700;
+}
+
+
+.auth-link:hover {
+  color: #ff3540;
+}
+
+
+/* ================================
+   RESPONSIVE LOGIN / REGISTRO
+================================ */
+
+@media (max-width: 768px) {
+  .auth-content {
+    padding: 25px 0;
+  }
+
+  .auth-card {
+    padding: 30px 24px;
+    margin: 0 10px;
   }
 }
