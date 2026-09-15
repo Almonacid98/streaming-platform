@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import AuthBackground from '../components/AuthBackground'
+
 import {
   Link,
   useNavigate
@@ -15,23 +16,41 @@ function Login() {
   const { login } = useAuth()
 
 
+  // ==========================================
+  // ESTADOS
+  // ==========================================
+
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [cargando, setCargando] = useState(false)
 
 
-  const handleSubmit = (event) => {
+  // ==========================================
+  // INICIAR SESIÓN
+  // ==========================================
+
+  const handleSubmit = async (event) => {
 
     event.preventDefault()
 
     setError('')
+    setCargando(true)
 
 
-    const loginCorrecto = login(
+    // Esperar respuesta del AuthContext
+    const loginCorrecto = await login(
       username,
       password
     )
 
+
+    setCargando(false)
+
+
+    // ========================================
+    // LOGIN CORRECTO
+    // ========================================
 
     if (loginCorrecto) {
 
@@ -41,6 +60,10 @@ function Login() {
     }
 
 
+    // ========================================
+    // LOGIN INCORRECTO
+    // ========================================
+
     setError(
       'Usuario o contraseña incorrectos.'
     )
@@ -48,6 +71,7 @@ function Login() {
 
 
   return (
+
     <AuthBackground>
 
       <div className="container">
@@ -57,6 +81,9 @@ function Login() {
           <div className="col-12 col-md-8 col-lg-5">
 
             <div className="auth-card">
+
+
+              {/* LOGO */}
 
               <div className="text-center mb-4">
 
@@ -75,17 +102,28 @@ function Login() {
               </div>
 
 
+              {/* ERROR */}
+
               {error && (
+
                 <div
                   className="alert alert-danger"
                   role="alert"
                 >
+
                   {error}
+
                 </div>
+
               )}
 
 
+              {/* FORMULARIO */}
+
               <form onSubmit={handleSubmit}>
+
+
+                {/* USUARIO */}
 
                 <div className="mb-3">
 
@@ -101,15 +139,22 @@ function Login() {
                     type="text"
                     className="form-control auth-input"
                     value={username}
+
                     onChange={(event) =>
-                      setUsername(event.target.value)
+                      setUsername(
+                        event.target.value
+                      )
                     }
+
                     placeholder="Ingresá tu usuario"
                     required
+                    disabled={cargando}
                   />
 
                 </div>
 
+
+                {/* CONTRASEÑA */}
 
                 <div className="mb-4">
 
@@ -125,25 +170,41 @@ function Login() {
                     type="password"
                     className="form-control auth-input"
                     value={password}
+
                     onChange={(event) =>
-                      setPassword(event.target.value)
+                      setPassword(
+                        event.target.value
+                      )
                     }
+
                     placeholder="Ingresá tu contraseña"
                     required
+                    disabled={cargando}
                   />
 
                 </div>
 
 
+                {/* BOTÓN */}
+
                 <button
                   type="submit"
                   className="btn btn-streaming w-100 py-2"
+                  disabled={cargando}
                 >
-                  Iniciar sesión
+
+                  {
+                    cargando
+                      ? 'Iniciando sesión...'
+                      : 'Iniciar sesión'
+                  }
+
                 </button>
 
               </form>
 
+
+              {/* REGISTRO */}
 
               <div className="text-center mt-4">
 
