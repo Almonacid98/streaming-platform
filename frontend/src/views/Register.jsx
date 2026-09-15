@@ -10,18 +10,30 @@ function Register() {
   const navigate = useNavigate()
   const { register } = useAuth()
 
+
+  // ==========================================
+  // DATOS DEL FORMULARIO
+  // ==========================================
+
   const [formulario, setFormulario] = useState({
     username: '',
     email: '',
+    edad: '',
+    genero: '',
     password: '',
     confirmPassword: ''
   })
 
+
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [cargando, setCargando] = useState(false)
 
 
-  // Actualiza los campos del formulario
+  // ==========================================
+  // ACTUALIZAR CAMPOS
+  // ==========================================
+
   const handleChange = (event) => {
 
     const { name, value } = event.target
@@ -33,8 +45,11 @@ function Register() {
   }
 
 
-  // Procesa el registro
-  const handleSubmit = (event) => {
+  // ==========================================
+  // REGISTRO REAL CON DJANGO
+  // ==========================================
+
+  const handleSubmit = async (event) => {
 
     event.preventDefault()
 
@@ -42,10 +57,15 @@ function Register() {
     setSuccess('')
 
 
-    // Verificar que las contraseñas coincidan
-    if (formulario.password !== formulario.confirmPassword) {
+    // Verificar contraseñas
+    if (
+      formulario.password !==
+      formulario.confirmPassword
+    ) {
 
-      setError('Las contraseñas no coinciden.')
+      setError(
+        'Las contraseñas no coinciden.'
+      )
 
       return
     }
@@ -62,12 +82,36 @@ function Register() {
     }
 
 
-    const resultado = register({
+    setCargando(true)
+
+
+    // ========================================
+    // ENVIAR DATOS AL BACKEND
+    // ========================================
+
+    const resultado = await register({
       username: formulario.username,
       email: formulario.email,
-      password: formulario.password
+      password: formulario.password,
+
+      edad:
+        formulario.edad !== ''
+          ? Number(formulario.edad)
+          : null,
+
+      genero:
+        formulario.genero !== ''
+          ? formulario.genero
+          : null
     })
 
+
+    setCargando(false)
+
+
+    // ========================================
+    // ERROR DEL BACKEND
+    // ========================================
 
     if (!resultado.success) {
 
@@ -77,14 +121,20 @@ function Register() {
     }
 
 
+    // ========================================
+    // REGISTRO EXITOSO
+    // ========================================
+
     setSuccess(
       'Cuenta creada correctamente. Redirigiendo al login...'
     )
 
 
-    // Pequeña pausa para mostrar el mensaje
+    // Redirigir al login
     setTimeout(() => {
+
       navigate('/login')
+
     }, 1200)
   }
 
@@ -101,7 +151,9 @@ function Register() {
 
             <div className="auth-card">
 
+
               {/* LOGO */}
+
               <div className="text-center mb-4">
 
                 <h1 className="auth-logo">
@@ -121,6 +173,7 @@ function Register() {
 
 
               {/* ERROR */}
+
               {error && (
 
                 <div
@@ -134,6 +187,7 @@ function Register() {
 
 
               {/* REGISTRO EXITOSO */}
+
               {success && (
 
                 <div
@@ -147,10 +201,12 @@ function Register() {
 
 
               {/* FORMULARIO */}
+
               <form onSubmit={handleSubmit}>
 
 
                 {/* USUARIO */}
+
                 <div className="mb-3">
 
                   <label
@@ -169,12 +225,14 @@ function Register() {
                     onChange={handleChange}
                     placeholder="Elegí un nombre de usuario"
                     required
+                    disabled={cargando}
                   />
 
                 </div>
 
 
                 {/* EMAIL */}
+
                 <div className="mb-3">
 
                   <label
@@ -193,12 +251,85 @@ function Register() {
                     onChange={handleChange}
                     placeholder="nombre@email.com"
                     required
+                    disabled={cargando}
                   />
 
                 </div>
 
 
+                {/* EDAD */}
+
+                <div className="mb-3">
+
+                  <label
+                    htmlFor="edad"
+                    className="form-label"
+                  >
+                    Edad
+                  </label>
+
+                  <input
+                    id="edad"
+                    name="edad"
+                    type="number"
+                    className="form-control auth-input"
+                    value={formulario.edad}
+                    onChange={handleChange}
+                    placeholder="Tu edad"
+                    min="1"
+                    disabled={cargando}
+                  />
+
+                </div>
+
+
+                {/* GÉNERO */}
+
+                <div className="mb-3">
+
+                  <label
+                    htmlFor="genero"
+                    className="form-label"
+                  >
+                    Género
+                  </label>
+
+                  <select
+                    id="genero"
+                    name="genero"
+                    className="form-select auth-input"
+                    value={formulario.genero}
+                    onChange={handleChange}
+                    disabled={cargando}
+                  >
+
+                    <option value="">
+                      Prefiero no especificar
+                    </option>
+
+                    <option value="masculino">
+                      Masculino
+                    </option>
+
+                    <option value="femenino">
+                      Femenino
+                    </option>
+
+                    <option value="otro">
+                      Otro
+                    </option>
+
+                    <option value="prefiero_no_decir">
+                      Prefiero no decir
+                    </option>
+
+                  </select>
+
+                </div>
+
+
                 {/* CONTRASEÑA */}
+
                 <div className="mb-3">
 
                   <label
@@ -217,12 +348,14 @@ function Register() {
                     onChange={handleChange}
                     placeholder="Creá una contraseña"
                     required
+                    disabled={cargando}
                   />
 
                 </div>
 
 
                 {/* REPETIR CONTRASEÑA */}
+
                 <div className="mb-4">
 
                   <label
@@ -241,23 +374,32 @@ function Register() {
                     onChange={handleChange}
                     placeholder="Repetí la contraseña"
                     required
+                    disabled={cargando}
                   />
 
                 </div>
 
 
                 {/* BOTÓN */}
+
                 <button
                   type="submit"
                   className="btn btn-streaming w-100 py-2"
+                  disabled={cargando}
                 >
-                  Crear cuenta
+
+                  {cargando
+                    ? 'Creando cuenta...'
+                    : 'Crear cuenta'
+                  }
+
                 </button>
 
               </form>
 
 
               {/* VOLVER AL LOGIN */}
+
               <div className="text-center mt-4">
 
                 <span className="text-secondary">
