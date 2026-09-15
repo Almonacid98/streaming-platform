@@ -1,14 +1,23 @@
 from rest_framework import serializers
+
 from .models import User
 
-# SERIALIZER GENERAL
+
+# ==========================================
+# SERIALIZER GENERAL DE USUARIO
+# ==========================================
+
 class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
         fields = '__all__'
 
-# REGISTRO DE USUARIOS
+
+# ==========================================
+# REGISTRO DE USUARIO
+# ==========================================
+
 class RegisterSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(
@@ -21,29 +30,41 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'username',
+            'first_name',
+            'last_name',
             'email',
             'password',
             'edad',
             'genero',
         )
 
+
     def create(self, validated_data):
 
-        password = validated_data.pop('password')
+        password = validated_data.pop(
+            'password'
+        )
 
-        user = User(**validated_data)
+        user = User(
+            **validated_data
+        )
 
-        # Hashear contraseña
+        # Guardar la contraseña cifrada
         user.set_password(password)
 
-        # Rol por defecto
+        # Los usuarios registrados desde
+        # la aplicación comienzan como USUARIO
         user.rol = User.Roles.USUARIO
 
         user.save()
 
         return user
 
-# PERFIL DEL USUARIO
+
+# ==========================================
+# PERFIL DEL USUARIO AUTENTICADO
+# ==========================================
+
 class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -52,6 +73,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'username',
+            'first_name',
+            'last_name',
             'email',
             'edad',
             'genero',
@@ -61,7 +84,11 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         read_only_fields = fields
 
-# LOGOUT JWT
+
+# ==========================================
+# LOGOUT
+# ==========================================
+
 class LogoutSerializer(serializers.Serializer):
 
     refresh = serializers.CharField()
