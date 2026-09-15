@@ -17,6 +17,8 @@ function Register() {
 
   const [formulario, setFormulario] = useState({
     username: '',
+    first_name: '',
+    last_name: '',
     email: '',
     edad: '',
     genero: '',
@@ -46,7 +48,7 @@ function Register() {
 
 
   // ==========================================
-  // REGISTRO REAL CON DJANGO
+  // REGISTRO CON DJANGO
   // ==========================================
 
   const handleSubmit = async (event) => {
@@ -57,7 +59,10 @@ function Register() {
     setSuccess('')
 
 
+    // ------------------------------------------
     // Verificar contraseñas
+    // ------------------------------------------
+
     if (
       formulario.password !==
       formulario.confirmPassword
@@ -71,7 +76,10 @@ function Register() {
     }
 
 
-    // Validación básica
+    // ------------------------------------------
+    // Validar contraseña
+    // ------------------------------------------
+
     if (formulario.password.length < 4) {
 
       setError(
@@ -82,16 +90,40 @@ function Register() {
     }
 
 
+    // ------------------------------------------
+    // Validar edad
+    // ------------------------------------------
+
+    if (
+      formulario.edad !== '' &&
+      Number(formulario.edad) <= 0
+    ) {
+
+      setError(
+        'Ingresá una edad válida.'
+      )
+
+      return
+    }
+
+
     setCargando(true)
 
 
-    // ========================================
+    // ==========================================
     // ENVIAR DATOS AL BACKEND
-    // ========================================
+    // ==========================================
 
     const resultado = await register({
+
       username: formulario.username,
+
+      first_name: formulario.first_name,
+
+      last_name: formulario.last_name,
+
       email: formulario.email,
+
       password: formulario.password,
 
       edad:
@@ -109,9 +141,9 @@ function Register() {
     setCargando(false)
 
 
-    // ========================================
+    // ==========================================
     // ERROR DEL BACKEND
-    // ========================================
+    // ==========================================
 
     if (!resultado.success) {
 
@@ -121,16 +153,15 @@ function Register() {
     }
 
 
-    // ========================================
+    // ==========================================
     // REGISTRO EXITOSO
-    // ========================================
+    // ==========================================
 
     setSuccess(
       'Cuenta creada correctamente. Redirigiendo al login...'
     )
 
 
-    // Redirigir al login
     setTimeout(() => {
 
       navigate('/login')
@@ -231,6 +262,58 @@ function Register() {
                 </div>
 
 
+                {/* NOMBRE */}
+
+                <div className="mb-3">
+
+                  <label
+                    htmlFor="first_name"
+                    className="form-label"
+                  >
+                    Nombre
+                  </label>
+
+                  <input
+                    id="first_name"
+                    name="first_name"
+                    type="text"
+                    className="form-control auth-input"
+                    value={formulario.first_name}
+                    onChange={handleChange}
+                    placeholder="Ingresá tu nombre"
+                    required
+                    disabled={cargando}
+                  />
+
+                </div>
+
+
+                {/* APELLIDO */}
+
+                <div className="mb-3">
+
+                  <label
+                    htmlFor="last_name"
+                    className="form-label"
+                  >
+                    Apellido
+                  </label>
+
+                  <input
+                    id="last_name"
+                    name="last_name"
+                    type="text"
+                    className="form-control auth-input"
+                    value={formulario.last_name}
+                    onChange={handleChange}
+                    placeholder="Ingresá tu apellido"
+                    required
+                    disabled={cargando}
+                  />
+
+                </div>
+
+
                 {/* EMAIL */}
 
                 <div className="mb-3">
@@ -275,7 +358,7 @@ function Register() {
                     className="form-control auth-input"
                     value={formulario.edad}
                     onChange={handleChange}
-                    placeholder="Tu edad"
+                    placeholder="Ingresá tu edad"
                     min="1"
                     disabled={cargando}
                   />
@@ -304,7 +387,7 @@ function Register() {
                   >
 
                     <option value="">
-                      Prefiero no especificar
+                      Seleccioná una opción
                     </option>
 
                     <option value="masculino">
@@ -388,9 +471,10 @@ function Register() {
                   disabled={cargando}
                 >
 
-                  {cargando
-                    ? 'Creando cuenta...'
-                    : 'Crear cuenta'
+                  {
+                    cargando
+                      ? 'Creando cuenta...'
+                      : 'Crear cuenta'
                   }
 
                 </button>
