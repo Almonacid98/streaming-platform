@@ -8,41 +8,39 @@ class Contenido(models.Model):
         PELICULA = 'pelicula', 'Película'
         SERIE = 'serie', 'Serie'
 
-    titulo = models.CharField(
-        max_length=200
-    )
+    titulo = models.CharField(max_length=200)
 
     tipo = models.CharField(
         max_length=20,
         choices=Tipos.choices
     )
 
-    genero = models.CharField(
-        max_length=100
-    )
+    genero = models.CharField(max_length=100)
 
     anio = models.IntegerField()
 
     duracion_min = models.PositiveIntegerField()
 
-    # URL del video almacenado en Cloudinary.
-    # Se deja nullable para no romper los contenidos
-    # que ya existen en la base de datos.
+    # Trailer / preview
     video_url = models.URLField(
         max_length=1000,
         blank=True,
         null=True
     )
 
-    # Identificador del recurso dentro de Cloudinary.
-    # Nos permitirá administrar el video posteriormente.
     video_public_id = models.CharField(
         max_length=500,
         blank=True,
         null=True
     )
 
-    # Portada del contenido.
+    # Película / contenido completo en HLS
+    video_hls_url = models.URLField(
+        max_length=1000,
+        blank=True,
+        null=True
+    )
+
     portada_url = models.URLField(
         max_length=1000,
         blank=True,
@@ -73,10 +71,6 @@ class Visualizacion(models.Model):
         related_name='visualizaciones'
     )
 
-    # Segundo exacto donde quedó el usuario.
-    # Ejemplo:
-    # 3600 = 1 hora
-    # 4654 = 1 h 17 min 34 s
     progreso_segundos = models.PositiveIntegerField(
         default=0
     )
