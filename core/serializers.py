@@ -4,15 +4,10 @@ from .models import Contenido, Visualizacion
 from users.models import User
 
 
-# ==========================================
-# USUARIO BÁSICO
-# ==========================================
-
 class UserBasicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-
         fields = [
             'id',
             'username',
@@ -20,10 +15,6 @@ class UserBasicSerializer(serializers.ModelSerializer):
             'rol',
         ]
 
-
-# ==========================================
-# CONTENIDO
-# ==========================================
 
 class ContenidoSerializer(serializers.ModelSerializer):
 
@@ -42,13 +33,17 @@ class ContenidoSerializer(serializers.ModelSerializer):
             'anio',
             'duracion_min',
 
-            # Cloudinary
+            # Trailer / preview
             'video_url',
             'video_public_id',
 
-            # Imagen de portada
+            # Película / contenido completo HLS
+            'video_hls_url',
+
+            # Imagen
             'portada_url',
 
+            # Usuario creador
             'creador',
         ]
 
@@ -59,18 +54,12 @@ class ContenidoSerializer(serializers.ModelSerializer):
         ]
 
 
-# ==========================================
-# VISUALIZACIÓN
-# ==========================================
-
 class VisualizacionSerializer(serializers.ModelSerializer):
 
     usuario = UserBasicSerializer(
         read_only=True
     )
 
-    # Información del contenido para que
-    # React pueda mostrar "Continuar viendo".
     contenido_detalle = ContenidoSerializer(
         source='contenido',
         read_only=True
