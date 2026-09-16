@@ -47,14 +47,6 @@ function Player() {
 
 
   // ==========================================
-  // HLS LOCAL DE PRUEBA
-  // ==========================================
-
-  const HLS_PRUEBA_URL =
-    'http://localhost:8081/interstellar_prueba/index.m3u8'
-
-
-  // ==========================================
   // FORMATEAR TIEMPO
   // ==========================================
 
@@ -196,11 +188,11 @@ function Player() {
       activo = false
     }
 
-  }, [API_URL, id])
+  }, [API_URL, id, authFetch])
 
 
   // ==========================================
-  // CONFIGURAR HLS
+  // CONFIGURAR VIDEO / HLS
   // ==========================================
 
   useEffect(() => {
@@ -214,94 +206,142 @@ function Player() {
     }
 
 
-    // Por ahora solamente el contenido 3
-    // utiliza nuestro HLS local de prueba.
+    const hlsUrl =
+      contenido.video_hls_url
 
-    if (Number(id) !== 3) {
+    const videoUrl =
+      contenido.video_url
 
-      if (contenido.video_url) {
-        video.src = contenido.video_url
+
+    // ========================================
+    // PRIORIDAD 1: HLS
+    // ========================================
+
+    if (hlsUrl) {
+
+      console.log(
+        'Cargando HLS desde la API:',
+        hlsUrl
+      )
+
+
+      // Safari y navegadores con soporte
+      // HLS nativo.
+
+      if (
+        video.canPlayType(
+          'application/vnd.apple.mpegurl'
+        )
+      ) {
+
+        video.src = hlsUrl
+
+        return () => {
+
+          video.pause()
+          video.removeAttribute('src')
+          video.load()
+        }
       }
 
+
+      // Chrome, Firefox, Edge, etc.
+      // utilizan hls.js.
+
+      if (Hls.isSupported()) {
+
+        const hls =
+          new Hls()
+
+
+        hls.loadSource(
+          hlsUrl
+        )
+
+
+        hls.attachMedia(
+          video
+        )
+
+
+        hls.on(
+          Hls.Events.MANIFEST_PARSED,
+          () => {
+
+            console.log(
+              'Manifiesto HLS cargado correctamente.'
+            )
+          }
+        )
+
+
+        hls.on(
+          Hls.Events.ERROR,
+          (event, data) => {
+
+            console.error(
+              'Error HLS:',
+              data
+            )
+
+
+            if (data.fatal) {
+
+              setError(
+                'Ocurrió un error al reproducir el contenido HLS.'
+              )
+            }
+          }
+        )
+
+
+        return () => {
+
+          hls.destroy()
+        }
+      }
+
+
+      setError(
+        'Este navegador no soporta reproducción HLS.'
+      )
+
       return
     }
 
 
-    console.log(
-      'Cargando HLS:',
-      HLS_PRUEBA_URL
-    )
+    // ========================================
+    // PRIORIDAD 2: VIDEO DIRECTO
+    // ========================================
 
+    if (videoUrl) {
 
-    // Safari y algunos navegadores pueden
-    // reproducir HLS directamente.
-
-    if (
-      video.canPlayType(
-        'application/vnd.apple.mpegurl'
-      )
-    ) {
-
-      video.src = HLS_PRUEBA_URL
-
-      return
-    }
-
-
-    // Chrome, Firefox, Edge, etc.
-    // utilizan hls.js.
-
-    if (Hls.isSupported()) {
-
-      const hls =
-        new Hls()
-
-
-      hls.loadSource(
-        HLS_PRUEBA_URL
+      console.log(
+        'Cargando video directo:',
+        videoUrl
       )
 
-
-      hls.attachMedia(
-        video
-      )
-
-
-      hls.on(
-        Hls.Events.MANIFEST_PARSED,
-        () => {
-
-          console.log(
-            'Manifiesto HLS cargado correctamente.'
-          )
-        }
-      )
-
-
-      hls.on(
-        Hls.Events.ERROR,
-        (event, data) => {
-
-          console.error(
-            'Error HLS:',
-            data
-          )
-        }
-      )
+      video.src = videoUrl
 
 
       return () => {
 
-        hls.destroy()
+        video.pause()
+        video.removeAttribute('src')
+        video.load()
       }
     }
 
 
-    setError(
-      'Este navegador no soporta reproducción HLS.'
+    // ========================================
+    // SIN VIDEO
+    // ========================================
+
+    console.warn(
+      'El contenido no tiene video_hls_url ni video_url.'
     )
 
-  }, [contenido, id])
+  }, [contenido])
 
 
   // ==========================================
@@ -407,10 +447,6 @@ function Player() {
       return
     }
 
-
-    // La prueba HLS solamente dura 2 minutos.
-    // Evitamos intentar posicionarnos fuera
-    // de su duración.
 
     let tiempoContinuacion =
       progresoGuardado
@@ -668,8 +704,10 @@ function Player() {
   // ==========================================
 
   const hayVideo =
-    Number(id) === 3 ||
-    Boolean(contenido.video_url)
+    Boolean(
+      contenido.video_hls_url ||
+      contenido.video_url
+    )
 
 
   return (

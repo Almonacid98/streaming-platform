@@ -70,6 +70,11 @@ function Home() {
   const [heroPreview, setHeroPreview] =
     useState(false)
 
+  const [
+    heroAudioBloqueado,
+    setHeroAudioBloqueado
+  ] = useState(false)
+
 
   // ==========================================
   // CARGAR INTERSTELLAR DESDE DJANGO
@@ -323,6 +328,7 @@ function Home() {
     }
 
 
+    setHeroAudioBloqueado(false)
     setHeroPreview(false)
   }
 
@@ -405,9 +411,8 @@ function Home() {
     setMouseSobreHero(true)
 
 
-    // Si la película actual no tiene video,
-    // simplemente detenemos el carrusel
-    // mientras el cursor permanezca encima.
+    // Si la película actual no tiene trailer,
+    // solamente detenemos el carrusel.
 
     if (!peliculaHero.videoUrl) {
       return
@@ -420,7 +425,7 @@ function Home() {
 
 
     // Esperamos 2 segundos antes
-    // de mostrar el video.
+    // de mostrar el trailer.
 
     heroTimeoutRef.current =
       setTimeout(() => {
@@ -464,8 +469,10 @@ function Home() {
 
 
     video.currentTime = 0
-
     video.muted = false
+    video.volume = 1
+
+    setHeroAudioBloqueado(false)
 
 
     const reproducir = async () => {
@@ -474,12 +481,15 @@ function Home() {
 
         await video.play()
 
+        setHeroAudioBloqueado(false)
+
       } catch (error) {
 
-        console.error(
-          'El navegador bloqueó la reproducción automática con sonido:',
-          error
+        console.log(
+          'El navegador requiere una interacción para reproducir con sonido.'
         )
+
+        setHeroAudioBloqueado(true)
       }
     }
 
@@ -487,6 +497,40 @@ function Home() {
     reproducir()
 
   }, [heroPreview])
+
+
+  // ==========================================
+  // ACTIVAR TRAILER CON SONIDO
+  // ==========================================
+
+  const activarTrailerConSonido = async () => {
+
+    const video =
+      heroVideoRef.current
+
+
+    if (!video) {
+      return
+    }
+
+
+    try {
+
+      video.muted = false
+      video.volume = 1
+
+      await video.play()
+
+      setHeroAudioBloqueado(false)
+
+    } catch (error) {
+
+      console.error(
+        'No se pudo reproducir el trailer con sonido:',
+        error
+      )
+    }
+  }
 
 
   // ==========================================
@@ -500,7 +544,6 @@ function Home() {
       clearTimeout(
         heroTimeoutRef.current
       )
-
     }
 
   }, [])
@@ -570,7 +613,6 @@ function Home() {
                 peliculaHero.videoUrl
               }
 
-              autoPlay
               playsInline
               preload="metadata"
 
@@ -587,7 +629,47 @@ function Home() {
 
                 zIndex: 0
               }}
-            />
+            >
+              Tu navegador no soporta
+              reproducción de video.
+            </video>
+
+          )}
+
+
+          {/* =================================
+              BOTÓN PARA HABILITAR SONIDO
+          ================================== */}
+
+          {heroPreview &&
+            heroAudioBloqueado && (
+
+            <button
+              type="button"
+
+              onClick={
+                activarTrailerConSonido
+              }
+
+              className="
+                btn
+                btn-light
+                position-absolute
+                top-50
+                start-50
+                translate-middle
+                fw-bold
+                px-4
+                py-3
+                shadow-lg
+              "
+
+              style={{
+                zIndex: 6
+              }}
+            >
+              🔊 Reproducir trailer
+            </button>
 
           )}
 
