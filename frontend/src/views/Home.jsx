@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState
+} from 'react'
+
+import { useNavigate } from 'react-router-dom'
 
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -8,6 +14,7 @@ import ContentCard from '../components/ContentCard'
 // ==========================================
 // IMÁGENES HERO
 // ==========================================
+
 import interstellarHero from '../assets/hero/interstellar-hero.jpeg'
 import batmanHero from '../assets/hero/the-batman-hero.jpeg'
 import quietPlaceHero from '../assets/hero/a-quiet-place-hero.jpeg'
@@ -15,32 +22,279 @@ import unchartedHero from '../assets/hero/uncharted-hero.jpeg'
 import knivesOutHero from '../assets/hero/knives-out-hero.jpeg'
 import grayManHero from '../assets/hero/the-gray-man-hero.jpeg'
 import walkingDeadHero from '../assets/hero/the-walking-dead-hero.jpg'
-import walkingDeadImg from '../assets/posters/the-walking-dead.jpeg'
+
 
 // ==========================================
 // PORTADAS
 // ==========================================
+
 import interstellarImg from '../assets/posters/interstellar.jpeg'
 import batmanImg from '../assets/posters/the-batman.jpeg'
 import quietPlaceImg from '../assets/posters/a-quiet-place.jpeg'
 import unchartedImg from '../assets/posters/uncharted.jpeg'
 import knivesOutImg from '../assets/posters/knives-out.jpg'
 import grayManImg from '../assets/posters/the-gray-man.jpg'
+import walkingDeadImg from '../assets/posters/the-walking-dead.jpeg'
 
 
 function Home() {
 
-  // ==========================================
-  // CARRUSEL DE CONTENIDOS
-  // ==========================================
+  const navigate = useNavigate()
+
   const sliderRef = useRef(null)
+  const heroVideoRef = useRef(null)
+  const heroTimeoutRef = useRef(null)
+
+  const API_URL =
+    import.meta.env.VITE_API_URL
+
+
+  // ==========================================
+  // VIDEO INTERSTELLAR
+  // ==========================================
+
+  const [interstellarVideo, setInterstellarVideo] =
+    useState(null)
+
+
+  // ==========================================
+  // HERO
+  // ==========================================
+
+  const [heroActual, setHeroActual] =
+    useState(0)
+
+  const [mouseSobreHero, setMouseSobreHero] =
+    useState(false)
+
+  const [heroPreview, setHeroPreview] =
+    useState(false)
+
+
+  // ==========================================
+  // CARGAR INTERSTELLAR DESDE DJANGO
+  // ==========================================
+
+  useEffect(() => {
+
+    let activo = true
+
+
+    const cargarInterstellar = async () => {
+
+      try {
+
+        const response =
+          await fetch(
+            `${API_URL}/contenidos/3/`
+          )
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            'No se pudo cargar Interstellar.'
+          )
+        }
+
+
+        const data =
+          await response.json()
+
+
+        if (activo) {
+
+          setInterstellarVideo(
+            data.video_url || null
+          )
+        }
+
+      } catch (error) {
+
+        console.error(
+          'Error cargando Interstellar:',
+          error
+        )
+      }
+    }
+
+
+    cargarInterstellar()
+
+
+    return () => {
+      activo = false
+    }
+
+  }, [API_URL])
+
+
+  // ==========================================
+  // CONTENIDOS
+  // ==========================================
+
+  const contenidos = [
+
+    {
+      id: 1,
+      apiId: 3,
+
+      titulo: 'Interstellar',
+      tipo: 'Película',
+      genero: 'Ciencia ficción',
+
+      descripcion:
+        'Un grupo de exploradores viaja a través del espacio en busca de un nuevo hogar para la humanidad.',
+
+      imagen: interstellarImg,
+      hero: interstellarHero,
+
+      videoUrl: interstellarVideo
+    },
+
+    {
+      id: 2,
+      apiId: null,
+
+      titulo: 'The Batman',
+      tipo: 'Película',
+      genero: 'Acción / Crimen',
+
+      descripcion:
+        'Batman investiga una serie de crímenes mientras descubre secretos ocultos en Gotham.',
+
+      imagen: batmanImg,
+      hero: batmanHero,
+
+      videoUrl: null
+    },
+
+    {
+      id: 3,
+      apiId: null,
+
+      titulo: 'A Quiet Place',
+      tipo: 'Película',
+      genero: 'Terror / Suspenso',
+
+      descripcion:
+        'Una familia debe sobrevivir en completo silencio para evitar criaturas que cazan mediante el sonido.',
+
+      imagen: quietPlaceImg,
+      hero: quietPlaceHero,
+
+      videoUrl: null
+    },
+
+    {
+      id: 4,
+      apiId: null,
+
+      titulo: 'Uncharted',
+      tipo: 'Película',
+      genero: 'Acción / Aventura',
+
+      descripcion:
+        'Un joven aventurero comienza una peligrosa búsqueda de un legendario tesoro perdido.',
+
+      imagen: unchartedImg,
+      hero: unchartedHero,
+
+      videoUrl: null
+    },
+
+    {
+      id: 5,
+      apiId: null,
+
+      titulo: 'Knives Out',
+      tipo: 'Película',
+      genero: 'Misterio',
+
+      descripcion:
+        'Un detective investiga la misteriosa muerte de un escritor dentro de una familia llena de secretos.',
+
+      imagen: knivesOutImg,
+      hero: knivesOutHero,
+
+      videoUrl: null
+    },
+
+    {
+      id: 6,
+      apiId: null,
+
+      titulo: 'The Gray Man',
+      tipo: 'Película',
+      genero: 'Acción / Thriller',
+
+      descripcion:
+        'Un agente encubierto descubre secretos peligrosos y termina perseguido por asesinos internacionales.',
+
+      imagen: grayManImg,
+      hero: grayManHero,
+
+      videoUrl: null
+    },
+
+    {
+      id: 7,
+      apiId: null,
+
+      titulo: 'The Walking Dead',
+      tipo: 'Serie',
+      genero: 'Terror / Drama',
+
+      descripcion:
+        'Un grupo de sobrevivientes intenta mantenerse con vida en un mundo devastado por un apocalipsis zombie.',
+
+      imagen: walkingDeadImg,
+      hero: walkingDeadHero,
+
+      videoUrl: null
+    }
+  ]
+
+
+  const peliculaHero =
+    contenidos[heroActual]
+
+
+  // ==========================================
+  // REPRODUCIR CONTENIDO
+  // ==========================================
+
+  const reproducirContenido = (contenido) => {
+
+    if (!contenido.apiId) {
+      return
+    }
+
+
+    navigate(
+      `/watch/${contenido.apiId}`
+    )
+  }
+
+
+  // ==========================================
+  // SLIDER
+  // ==========================================
 
   const moverSlider = (direccion) => {
-    const slider = sliderRef.current
 
-    if (!slider) return
+    const slider =
+      sliderRef.current
 
-    const distancia = slider.clientWidth * 0.8
+
+    if (!slider) {
+      return
+    }
+
+
+    const distancia =
+      slider.clientWidth * 0.8
+
 
     slider.scrollBy({
       left: direccion * distancia,
@@ -50,93 +304,38 @@ function Home() {
 
 
   // ==========================================
-  // PELÍCULAS
+  // LIMPIAR PREVIEW DEL HERO
   // ==========================================
-  const contenidos = [
-    {
-      id: 1,
-      titulo: 'Interstellar',
-      tipo: 'Película',
-      genero: 'Ciencia ficción',
-      descripcion:
-        'Un grupo de exploradores viaja a través del espacio en busca de un nuevo hogar para la humanidad.',
-      imagen: interstellarImg,
-      hero: interstellarHero
-    },
 
-    {
-      id: 2,
-      titulo: 'The Batman',
-      tipo: 'Película',
-      genero: 'Acción / Crimen',
-      descripcion:
-        'Batman investiga una serie de crímenes mientras descubre secretos ocultos en Gotham.',
-      imagen: batmanImg,
-      hero: batmanHero
-    },
+  const limpiarPreviewHero = () => {
 
-    {
-      id: 3,
-      titulo: 'A Quiet Place',
-      tipo: 'Película',
-      genero: 'Terror / Suspenso',
-      descripcion:
-        'Una familia debe sobrevivir en completo silencio para evitar criaturas que cazan mediante el sonido.',
-      imagen: quietPlaceImg,
-      hero: quietPlaceHero
-    },
+    clearTimeout(
+      heroTimeoutRef.current
+    )
 
-    {
-      id: 4,
-      titulo: 'Uncharted',
-      tipo: 'Película',
-      genero: 'Acción / Aventura',
-      descripcion:
-        'Un joven aventurero comienza una peligrosa búsqueda de un legendario tesoro perdido.',
-      imagen: unchartedImg,
-      hero: unchartedHero
-    },
+    heroTimeoutRef.current = null
 
-    {
-      id: 5,
-      titulo: 'Knives Out',
-      tipo: 'Película',
-      genero: 'Misterio',
-      descripcion:
-        'Un detective investiga la misteriosa muerte de un escritor dentro de una familia llena de secretos.',
-      imagen: knivesOutImg,
-      hero: knivesOutHero
-    },
 
-    {
-      id: 6,
-      titulo: 'The Gray Man',
-      tipo: 'Película',
-      genero: 'Acción / Thriller',
-      descripcion:
-        'Un agente encubierto descubre secretos peligrosos y termina perseguido por asesinos internacionales.',
-      imagen: grayManImg,
-      hero: grayManHero
-    },
-    {
-      id: 7,
-      titulo: 'The Walking Dead',
-      tipo: 'Serie',
-      genero: 'Terror / Drama',
-      descripcion:
-        'Un grupo de sobrevivientes intenta mantenerse con vida en un mundo devastado por un apocalipsis zombie.',
-      imagen: walkingDeadImg,
-      hero: walkingDeadHero
+    if (heroVideoRef.current) {
+
+      heroVideoRef.current.pause()
+      heroVideoRef.current.currentTime = 0
     }
-  ]
+
+
+    setHeroPreview(false)
+  }
 
 
   // ==========================================
-  // HERO AUTOMÁTICO
+  // CAMBIAR HERO
   // ==========================================
-  const [heroActual, setHeroActual] = useState(0)
 
   const siguienteHero = () => {
+
+    limpiarPreviewHero()
+
+
     setHeroActual((actual) =>
       actual === contenidos.length - 1
         ? 0
@@ -144,7 +343,12 @@ function Home() {
     )
   }
 
+
   const anteriorHero = () => {
+
+    limpiarPreviewHero()
+
+
     setHeroActual((actual) =>
       actual === 0
         ? contenidos.length - 1
@@ -153,34 +357,186 @@ function Home() {
   }
 
 
-  // Cambia automáticamente cada 5 segundos
+  // ==========================================
+  // CARRUSEL AUTOMÁTICO
+  // ==========================================
+
   useEffect(() => {
-    const intervalo = setInterval(() => {
-      setHeroActual((actual) =>
-        actual === contenidos.length - 1
-          ? 0
-          : actual + 1
+
+    // Mientras el cursor está sobre el Hero,
+    // el carrusel queda detenido.
+
+    if (mouseSobreHero) {
+      return
+    }
+
+
+    const intervalo =
+      setInterval(() => {
+
+        setHeroActual((actual) =>
+          actual === contenidos.length - 1
+            ? 0
+            : actual + 1
+        )
+
+      }, 5000)
+
+
+    return () => {
+
+      clearInterval(
+        intervalo
       )
-    }, 5000)
+    }
 
-    return () => clearInterval(intervalo)
-  }, [contenidos.length])
+  }, [
+    mouseSobreHero,
+    contenidos.length
+  ])
 
 
-  const peliculaHero = contenidos[heroActual]
+  // ==========================================
+  // CURSOR ENTRA AL HERO
+  // ==========================================
 
+  const entrarHero = () => {
+
+    setMouseSobreHero(true)
+
+
+    // Si la película actual no tiene video,
+    // simplemente detenemos el carrusel
+    // mientras el cursor permanezca encima.
+
+    if (!peliculaHero.videoUrl) {
+      return
+    }
+
+
+    clearTimeout(
+      heroTimeoutRef.current
+    )
+
+
+    // Esperamos 2 segundos antes
+    // de mostrar el video.
+
+    heroTimeoutRef.current =
+      setTimeout(() => {
+
+        setHeroPreview(true)
+
+      }, 2000)
+  }
+
+
+  // ==========================================
+  // CURSOR SALE DEL HERO
+  // ==========================================
+
+  const salirHero = () => {
+
+    setMouseSobreHero(false)
+
+    limpiarPreviewHero()
+  }
+
+
+  // ==========================================
+  // REPRODUCIR PREVIEW HERO CON SONIDO
+  // ==========================================
+
+  useEffect(() => {
+
+    if (!heroPreview) {
+      return
+    }
+
+
+    const video =
+      heroVideoRef.current
+
+
+    if (!video) {
+      return
+    }
+
+
+    video.currentTime = 0
+
+    video.muted = false
+
+
+    const reproducir = async () => {
+
+      try {
+
+        await video.play()
+
+      } catch (error) {
+
+        console.error(
+          'El navegador bloqueó la reproducción automática con sonido:',
+          error
+        )
+      }
+    }
+
+
+    reproducir()
+
+  }, [heroPreview])
+
+
+  // ==========================================
+  // LIMPIEZA GENERAL
+  // ==========================================
+
+  useEffect(() => {
+
+    return () => {
+
+      clearTimeout(
+        heroTimeoutRef.current
+      )
+
+    }
+
+  }, [])
+
+
+  // ==========================================
+  // RENDER
+  // ==========================================
 
   return (
     <>
+
       <Navbar />
+
 
       <main>
 
         {/* =====================================
             HERO PRINCIPAL
         ====================================== */}
+
         <section
-          className="hero-section"
+          className="
+            hero-section
+            position-relative
+            overflow-hidden
+          "
+
+          onMouseEnter={
+            entrarHero
+          }
+
+          onMouseLeave={
+            salirHero
+          }
+
           style={{
             backgroundImage: `
               linear-gradient(
@@ -199,36 +555,182 @@ function Home() {
           }}
         >
 
-          <div className="container py-5">
+
+          {/* =================================
+              VIDEO DEL HERO
+          ================================== */}
+
+          {heroPreview &&
+            peliculaHero.videoUrl && (
+
+            <video
+              ref={heroVideoRef}
+
+              src={
+                peliculaHero.videoUrl
+              }
+
+              autoPlay
+              playsInline
+              preload="metadata"
+
+              style={{
+                position: 'absolute',
+
+                top: 0,
+                left: 0,
+
+                width: '100%',
+                height: '100%',
+
+                objectFit: 'cover',
+
+                zIndex: 0
+              }}
+            />
+
+          )}
+
+
+          {/* =================================
+              DEGRADADO SOBRE EL VIDEO
+          ================================== */}
+
+          {heroPreview && (
+
+            <div
+              style={{
+                position: 'absolute',
+
+                inset: 0,
+
+                zIndex: 1,
+
+                pointerEvents: 'none',
+
+                background: `
+                  linear-gradient(
+                    to right,
+                    rgba(0,0,0,0.92) 0%,
+                    rgba(0,0,0,0.55) 42%,
+                    rgba(0,0,0,0.05) 100%
+                  ),
+                  linear-gradient(
+                    to bottom,
+                    transparent 65%,
+                    #141414 100%
+                  )
+                `
+              }}
+            />
+
+          )}
+
+
+          {/* =================================
+              INFORMACIÓN HERO
+          ================================== */}
+
+          <div
+            className="
+              container
+              py-5
+              position-relative
+            "
+
+            style={{
+              zIndex: 2
+            }}
+          >
 
             <div className="row align-items-center">
 
               <div className="col-12 col-lg-7">
 
-                <p className="text-uppercase fw-bold text-danger mb-2">
+                <p
+                  className="
+                    text-uppercase
+                    fw-bold
+                    text-danger
+                    mb-2
+                  "
+                >
                   Contenido destacado
                 </p>
+
 
                 <h1 className="display-2 fw-bold">
                   {peliculaHero.titulo}
                 </h1>
 
+
                 <p className="hero-genre mb-2">
-                  {peliculaHero.tipo} • {peliculaHero.genero}
+
+                  {peliculaHero.tipo}
+
+                  {' • '}
+
+                  {peliculaHero.genero}
+
                 </p>
+
 
                 <p className="lead mt-3 mb-4">
                   {peliculaHero.descripcion}
                 </p>
 
 
-                <div className="d-flex flex-column flex-sm-row gap-3">
+                <div
+                  className="
+                    d-flex
+                    flex-column
+                    flex-sm-row
+                    gap-3
+                  "
+                >
 
-                  <button className="btn btn-streaming btn-lg">
-                    ▶ Reproducir
-                  </button>
+                  {peliculaHero.apiId ? (
 
-                  <button className="btn btn-outline-light btn-lg">
+                    <button
+                      className="
+                        btn
+                        btn-streaming
+                        btn-lg
+                      "
+
+                      onClick={() =>
+                        reproducirContenido(
+                          peliculaHero
+                        )
+                      }
+                    >
+                      ▶ Reproducir
+                    </button>
+
+                  ) : (
+
+                    <button
+                      className="
+                        btn
+                        btn-secondary
+                        btn-lg
+                      "
+
+                      disabled
+                    >
+                      Próximamente
+                    </button>
+
+                  )}
+
+
+                  <button
+                    className="
+                      btn
+                      btn-outline-light
+                      btn-lg
+                    "
+                  >
                     Más información
                   </button>
 
@@ -241,39 +743,96 @@ function Home() {
           </div>
 
 
-          {/* FLECHAS HERO */}
+          {/* =================================
+              FLECHA IZQUIERDA
+          ================================== */}
+
           <button
-            className="hero-arrow hero-arrow-left"
-            onClick={anteriorHero}
+            className="
+              hero-arrow
+              hero-arrow-left
+            "
+
+            style={{
+              zIndex: 5
+            }}
+
+            onClick={
+              anteriorHero
+            }
+
             aria-label="Película anterior"
           >
             ‹
           </button>
 
+
+          {/* =================================
+              FLECHA DERECHA
+          ================================== */}
+
           <button
-            className="hero-arrow hero-arrow-right"
-            onClick={siguienteHero}
+            className="
+              hero-arrow
+              hero-arrow-right
+            "
+
+            style={{
+              zIndex: 5
+            }}
+
+            onClick={
+              siguienteHero
+            }
+
             aria-label="Película siguiente"
           >
             ›
           </button>
 
 
-          {/* INDICADORES HERO */}
-          <div className="hero-indicators">
+          {/* =================================
+              INDICADORES HERO
+          ================================== */}
 
-            {contenidos.map((contenido, index) => (
-              <button
-                key={contenido.id}
-                className={
-                  index === heroActual
-                    ? 'hero-dot active'
-                    : 'hero-dot'
-                }
-                onClick={() => setHeroActual(index)}
-                aria-label={`Mostrar ${contenido.titulo}`}
-              />
-            ))}
+          <div
+            className="hero-indicators"
+
+            style={{
+              zIndex: 5
+            }}
+          >
+
+            {contenidos.map(
+              (contenido, index) => (
+
+                <button
+                  key={
+                    contenido.id
+                  }
+
+                  className={
+                    index === heroActual
+                      ? 'hero-dot active'
+                      : 'hero-dot'
+                  }
+
+                  onClick={() => {
+
+                    limpiarPreviewHero()
+
+                    setHeroActual(
+                      index
+                    )
+                  }}
+
+                  aria-label={
+                    `Mostrar ${contenido.titulo}`
+                  }
+                />
+
+              )
+            )}
 
           </div>
 
@@ -281,11 +840,18 @@ function Home() {
 
 
         {/* =====================================
-            CONTENIDO DESTACADO
+            CONTENIDOS DESTACADOS
         ====================================== */}
+
         <section className="content-section py-5">
 
-          <div className="container-fluid px-4 px-lg-5">
+          <div
+            className="
+              container-fluid
+              px-4
+              px-lg-5
+            "
+          >
 
             <div className="mb-4">
 
@@ -293,8 +859,10 @@ function Home() {
                 Películas destacadas
               </h2>
 
+
               <p className="text-secondary mb-0">
-                Descubrí películas seleccionadas para vos.
+                Descubrí películas seleccionadas
+                para vos.
               </p>
 
             </div>
@@ -302,42 +870,104 @@ function Home() {
 
             <div className="streaming-slider-wrapper">
 
-              {/* FLECHA IZQUIERDA */}
+
+              {/* =================================
+                  FLECHA IZQUIERDA
+              ================================== */}
+
               <button
-                className="slider-button slider-button-left"
-                onClick={() => moverSlider(-1)}
+                className="
+                  slider-button
+                  slider-button-left
+                "
+
+                onClick={() =>
+                  moverSlider(-1)
+                }
+
                 aria-label="Contenido anterior"
               >
                 ‹
               </button>
 
 
-              {/* CARRUSEL */}
+              {/* =================================
+                  CARRUSEL
+              ================================== */}
+
               <div
                 className="streaming-slider"
-                ref={sliderRef}
+
+                ref={
+                  sliderRef
+                }
               >
 
-                {contenidos.map((contenido) => (
+                {contenidos.map(
+                  (contenido) => (
 
-                  <ContentCard
-                    key={contenido.id}
-                    titulo={contenido.titulo}
-                    tipo={contenido.tipo}
-                    genero={contenido.genero}
-                    descripcion={contenido.descripcion}
-                    imagen={contenido.imagen}
-                  />
+                    <ContentCard
+                      key={
+                        contenido.id
+                      }
 
-                ))}
+                      titulo={
+                        contenido.titulo
+                      }
+
+                      tipo={
+                        contenido.tipo
+                      }
+
+                      genero={
+                        contenido.genero
+                      }
+
+                      descripcion={
+                        contenido.descripcion
+                      }
+
+                      imagen={
+                        contenido.imagen
+                      }
+
+                      videoUrl={
+                        contenido.videoUrl
+                      }
+
+                      disponible={
+                        Boolean(
+                          contenido.apiId
+                        )
+                      }
+
+                      onReproducir={() =>
+                        reproducirContenido(
+                          contenido
+                        )
+                      }
+                    />
+
+                  )
+                )}
 
               </div>
 
 
-              {/* FLECHA DERECHA */}
+              {/* =================================
+                  FLECHA DERECHA
+              ================================== */}
+
               <button
-                className="slider-button slider-button-right"
-                onClick={() => moverSlider(1)}
+                className="
+                  slider-button
+                  slider-button-right
+                "
+
+                onClick={() =>
+                  moverSlider(1)
+                }
+
                 aria-label="Contenido siguiente"
               >
                 ›
@@ -353,6 +983,7 @@ function Home() {
         {/* =====================================
             DISPOSITIVOS
         ====================================== */}
+
         <section className="py-5 bg-black">
 
           <div className="container text-center">
@@ -361,9 +992,12 @@ function Home() {
               Mirá donde quieras
             </h2>
 
+
             <p className="text-secondary mb-0">
-              Disfrutá tus contenidos favoritos desde tu computadora,
-              tablet o celular.
+
+              Disfrutá tus contenidos favoritos
+              desde tu computadora, tablet o celular.
+
             </p>
 
           </div>
@@ -372,9 +1006,12 @@ function Home() {
 
       </main>
 
+
       <Footer />
+
     </>
   )
 }
+
 
 export default Home

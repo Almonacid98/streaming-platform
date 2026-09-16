@@ -219,6 +219,99 @@ export function AuthProvider({ children }) {
 
 
   // ==========================================
+  // FETCH AUTENTICADO
+  // ==========================================
+  //
+  // Se utilizará para realizar peticiones
+  // protegidas desde cualquier componente.
+  //
+  // Si el access token está vencido:
+  //
+  // 1. Intenta renovar el access.
+  // 2. Guarda el nuevo token.
+  // 3. Repite automáticamente la petición.
+  //
+  // ==========================================
+
+  const authFetch = async (url, options = {}) => {
+
+    let access =
+      localStorage.getItem('access')
+
+
+    // Si no tenemos access pero sí puede existir
+    // un refresh, intentamos renovarlo.
+    if (!access) {
+
+      access =
+        await renovarAccessToken()
+
+
+      if (!access) {
+
+        limpiarSesion()
+
+        throw new Error(
+          'No existe una sesión válida.'
+        )
+      }
+    }
+
+
+    // Construye las opciones manteniendo cualquier
+    // header enviado por el componente.
+    const crearOpciones = (token) => ({
+      ...options,
+
+      headers: {
+        ...options.headers,
+
+        'Authorization':
+          `Bearer ${token}`
+      }
+    })
+
+
+    let response = await fetch(
+      url,
+      crearOpciones(access)
+    )
+
+
+    // ======================================
+    // ACCESS VENCIDO O INVÁLIDO
+    // ======================================
+
+    if (response.status === 401) {
+
+      const nuevoAccess =
+        await renovarAccessToken()
+
+
+      if (!nuevoAccess) {
+
+        limpiarSesion()
+
+        throw new Error(
+          'La sesión ha expirado.'
+        )
+      }
+
+
+      // Repetimos exactamente la misma petición
+      // utilizando el nuevo access token.
+      response = await fetch(
+        url,
+        crearOpciones(nuevoAccess)
+      )
+    }
+
+
+    return response
+  }
+
+
+  // ==========================================
   // RESTAURAR SESIÓN
   // ==========================================
 
@@ -603,7 +696,8 @@ export function AuthProvider({ children }) {
         loading,
         login,
         register,
-        logout
+        logout,
+        authFetch
       }}
     >
       {children}
