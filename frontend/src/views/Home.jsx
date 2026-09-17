@@ -50,10 +50,10 @@ function Home() {
 
 
   // ==========================================
-  // VIDEO INTERSTELLAR
+  // INTERSTELLAR DESDE DJANGO
   // ==========================================
 
-  const [interstellarVideo, setInterstellarVideo] =
+  const [interstellarApi, setInterstellarApi] =
     useState(null)
 
 
@@ -108,10 +108,7 @@ function Home() {
 
 
         if (activo) {
-
-          setInterstellarVideo(
-            data.video_url || null
-          )
+          setInterstellarApi(data)
         }
 
       } catch (error) {
@@ -142,19 +139,36 @@ function Home() {
 
     {
       id: 1,
-      apiId: 3,
 
-      titulo: 'Interstellar',
-      tipo: 'Película',
-      genero: 'Ciencia ficción',
+      apiId:
+        interstellarApi?.id || 3,
+
+      titulo:
+        interstellarApi?.titulo ||
+        'Interstellar',
+
+      tipo:
+        interstellarApi?.tipo ||
+        'Película',
+
+      genero:
+        interstellarApi?.genero ||
+        'Ciencia ficción',
 
       descripcion:
         'Un grupo de exploradores viaja a través del espacio en busca de un nuevo hogar para la humanidad.',
 
-      imagen: interstellarImg,
-      hero: interstellarHero,
+      imagen:
+        interstellarApi?.portada_url ||
+        interstellarImg,
 
-      videoUrl: interstellarVideo
+      hero:
+        interstellarApi?.hero_url ||
+        interstellarHero,
+
+      videoUrl:
+        interstellarApi?.video_url ||
+        null
     },
 
     {
@@ -369,9 +383,6 @@ function Home() {
 
   useEffect(() => {
 
-    // Mientras el cursor está sobre el Hero,
-    // el carrusel queda detenido.
-
     if (mouseSobreHero) {
       return
     }
@@ -411,9 +422,6 @@ function Home() {
     setMouseSobreHero(true)
 
 
-    // Si la película actual no tiene trailer,
-    // solamente detenemos el carrusel.
-
     if (!peliculaHero.videoUrl) {
       return
     }
@@ -423,9 +431,6 @@ function Home() {
       heroTimeoutRef.current
     )
 
-
-    // Esperamos 2 segundos antes
-    // de mostrar el trailer.
 
     heroTimeoutRef.current =
       setTimeout(() => {
