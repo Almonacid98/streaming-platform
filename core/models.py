@@ -21,6 +21,12 @@ class Contenido(models.Model):
 
     duracion_min = models.PositiveIntegerField()
 
+    # Descripción o sinopsis del contenido
+    descripcion = models.TextField(
+        blank=True,
+        default=''
+    )
+
     # Trailer / preview del contenido
     video_url = models.URLField(
         max_length=1000,

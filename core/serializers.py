@@ -32,6 +32,7 @@ class ContenidoSerializer(serializers.ModelSerializer):
             'genero',
             'anio',
             'duracion_min',
+            'descripcion',
             'video_url',
             'video_public_id',
             'video_hls_url',
