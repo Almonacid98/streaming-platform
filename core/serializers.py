@@ -32,18 +32,11 @@ class ContenidoSerializer(serializers.ModelSerializer):
             'genero',
             'anio',
             'duracion_min',
-
-            # Trailer / preview
             'video_url',
             'video_public_id',
-
-            # Película / contenido completo HLS
             'video_hls_url',
-
-            # Imagen
             'portada_url',
-
-            # Usuario creador
+            'hero_url',
             'creador',
         ]
 
