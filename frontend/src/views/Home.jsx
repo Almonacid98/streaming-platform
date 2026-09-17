@@ -11,32 +11,6 @@ import Footer from '../components/Footer'
 import ContentCard from '../components/ContentCard'
 
 
-// ==========================================
-// IMÁGENES HERO
-// ==========================================
-
-import interstellarHero from '../assets/hero/interstellar-hero.jpeg'
-import batmanHero from '../assets/hero/the-batman-hero.jpeg'
-import quietPlaceHero from '../assets/hero/a-quiet-place-hero.jpeg'
-import unchartedHero from '../assets/hero/uncharted-hero.jpeg'
-import knivesOutHero from '../assets/hero/knives-out-hero.jpeg'
-import grayManHero from '../assets/hero/the-gray-man-hero.jpeg'
-import walkingDeadHero from '../assets/hero/the-walking-dead-hero.jpg'
-
-
-// ==========================================
-// PORTADAS
-// ==========================================
-
-import interstellarImg from '../assets/posters/interstellar.jpeg'
-import batmanImg from '../assets/posters/the-batman.jpeg'
-import quietPlaceImg from '../assets/posters/a-quiet-place.jpeg'
-import unchartedImg from '../assets/posters/uncharted.jpeg'
-import knivesOutImg from '../assets/posters/knives-out.jpg'
-import grayManImg from '../assets/posters/the-gray-man.jpg'
-import walkingDeadImg from '../assets/posters/the-walking-dead.jpeg'
-
-
 function Home() {
 
   const navigate = useNavigate()
@@ -50,10 +24,16 @@ function Home() {
 
 
   // ==========================================
-  // INTERSTELLAR DESDE DJANGO
+  // CONTENIDOS DESDE DJANGO
   // ==========================================
 
-  const [interstellarApi, setInterstellarApi] =
+  const [contenidos, setContenidos] =
+    useState([])
+
+  const [cargandoContenidos, setCargandoContenidos] =
+    useState(true)
+
+  const [errorContenidos, setErrorContenidos] =
     useState(null)
 
 
@@ -77,7 +57,7 @@ function Home() {
 
 
   // ==========================================
-  // CARGAR INTERSTELLAR DESDE DJANGO
+  // CARGAR CATÁLOGO DESDE DJANGO
   // ==========================================
 
   useEffect(() => {
@@ -85,20 +65,24 @@ function Home() {
     let activo = true
 
 
-    const cargarInterstellar = async () => {
+    const cargarContenidos = async () => {
 
       try {
 
+        setCargandoContenidos(true)
+        setErrorContenidos(null)
+
+
         const response =
           await fetch(
-            `${API_URL}/contenidos/3/`
+            `${API_URL}/contenidos/`
           )
 
 
         if (!response.ok) {
 
           throw new Error(
-            'No se pudo cargar Interstellar.'
+            'No se pudo cargar el catálogo.'
           )
         }
 
@@ -107,24 +91,100 @@ function Home() {
           await response.json()
 
 
+        if (!Array.isArray(data)) {
+
+          throw new Error(
+            'La respuesta del catálogo no es válida.'
+          )
+        }
+
+
         if (activo) {
-          setInterstellarApi(data)
+
+          const contenidosAdaptados =
+            data.map((contenido) => ({
+
+              id: contenido.id,
+
+              apiId: contenido.id,
+
+              titulo:
+                contenido.titulo,
+
+              tipo:
+                contenido.tipo,
+
+              genero:
+                contenido.genero,
+
+              descripcion:
+                contenido.descripcion ||
+                'Sin descripción disponible.',
+
+              imagen:
+                contenido.portada_url ||
+                null,
+
+              hero:
+                contenido.hero_url ||
+                contenido.portada_url ||
+                null,
+
+              videoUrl:
+                contenido.video_url ||
+                null,
+
+              videoHlsUrl:
+                contenido.video_hls_url ||
+                null,
+
+              anio:
+                contenido.anio,
+
+              duracionMin:
+                contenido.duracion_min
+
+            }))
+
+
+          setContenidos(
+            contenidosAdaptados
+          )
+
+
+          setHeroActual(0)
         }
 
       } catch (error) {
 
         console.error(
-          'Error cargando Interstellar:',
+          'Error cargando contenidos:',
           error
         )
+
+
+        if (activo) {
+
+          setErrorContenidos(
+            'No se pudo cargar el catálogo.'
+          )
+        }
+
+      } finally {
+
+        if (activo) {
+
+          setCargandoContenidos(false)
+        }
       }
     }
 
 
-    cargarInterstellar()
+    cargarContenidos()
 
 
     return () => {
+
       activo = false
     }
 
@@ -132,151 +192,11 @@ function Home() {
 
 
   // ==========================================
-  // CONTENIDOS
+  // CONTENIDO ACTUAL DEL HERO
   // ==========================================
 
-  const contenidos = [
-
-    {
-      id: 1,
-
-      apiId:
-        interstellarApi?.id || 3,
-
-      titulo:
-        interstellarApi?.titulo ||
-        'Interstellar',
-
-      tipo:
-        interstellarApi?.tipo ||
-        'Película',
-
-      genero:
-        interstellarApi?.genero ||
-        'Ciencia ficción',
-
-      descripcion:
-        'Un grupo de exploradores viaja a través del espacio en busca de un nuevo hogar para la humanidad.',
-
-      imagen:
-        interstellarApi?.portada_url ||
-        interstellarImg,
-
-      hero:
-        interstellarApi?.hero_url ||
-        interstellarHero,
-
-      videoUrl:
-        interstellarApi?.video_url ||
-        null
-    },
-
-    {
-      id: 2,
-      apiId: null,
-
-      titulo: 'The Batman',
-      tipo: 'Película',
-      genero: 'Acción / Crimen',
-
-      descripcion:
-        'Batman investiga una serie de crímenes mientras descubre secretos ocultos en Gotham.',
-
-      imagen: batmanImg,
-      hero: batmanHero,
-
-      videoUrl: null
-    },
-
-    {
-      id: 3,
-      apiId: null,
-
-      titulo: 'A Quiet Place',
-      tipo: 'Película',
-      genero: 'Terror / Suspenso',
-
-      descripcion:
-        'Una familia debe sobrevivir en completo silencio para evitar criaturas que cazan mediante el sonido.',
-
-      imagen: quietPlaceImg,
-      hero: quietPlaceHero,
-
-      videoUrl: null
-    },
-
-    {
-      id: 4,
-      apiId: null,
-
-      titulo: 'Uncharted',
-      tipo: 'Película',
-      genero: 'Acción / Aventura',
-
-      descripcion:
-        'Un joven aventurero comienza una peligrosa búsqueda de un legendario tesoro perdido.',
-
-      imagen: unchartedImg,
-      hero: unchartedHero,
-
-      videoUrl: null
-    },
-
-    {
-      id: 5,
-      apiId: null,
-
-      titulo: 'Knives Out',
-      tipo: 'Película',
-      genero: 'Misterio',
-
-      descripcion:
-        'Un detective investiga la misteriosa muerte de un escritor dentro de una familia llena de secretos.',
-
-      imagen: knivesOutImg,
-      hero: knivesOutHero,
-
-      videoUrl: null
-    },
-
-    {
-      id: 6,
-      apiId: null,
-
-      titulo: 'The Gray Man',
-      tipo: 'Película',
-      genero: 'Acción / Thriller',
-
-      descripcion:
-        'Un agente encubierto descubre secretos peligrosos y termina perseguido por asesinos internacionales.',
-
-      imagen: grayManImg,
-      hero: grayManHero,
-
-      videoUrl: null
-    },
-
-    {
-      id: 7,
-      apiId: null,
-
-      titulo: 'The Walking Dead',
-      tipo: 'Serie',
-      genero: 'Terror / Drama',
-
-      descripcion:
-        'Un grupo de sobrevivientes intenta mantenerse con vida en un mundo devastado por un apocalipsis zombie.',
-
-      imagen: walkingDeadImg,
-      hero: walkingDeadHero,
-
-      videoUrl: null
-    }
-  ]
-
-
   const peliculaHero =
-    contenidos[heroActual]
+    contenidos[heroActual] || null
 
 
   // ==========================================
@@ -285,7 +205,7 @@ function Home() {
 
   const reproducirContenido = (contenido) => {
 
-    if (!contenido.apiId) {
+    if (!contenido?.apiId) {
       return
     }
 
@@ -353,6 +273,11 @@ function Home() {
 
   const siguienteHero = () => {
 
+    if (contenidos.length === 0) {
+      return
+    }
+
+
     limpiarPreviewHero()
 
 
@@ -365,6 +290,11 @@ function Home() {
 
 
   const anteriorHero = () => {
+
+    if (contenidos.length === 0) {
+      return
+    }
+
 
     limpiarPreviewHero()
 
@@ -383,7 +313,10 @@ function Home() {
 
   useEffect(() => {
 
-    if (mouseSobreHero) {
+    if (
+      mouseSobreHero ||
+      contenidos.length <= 1
+    ) {
       return
     }
 
@@ -422,7 +355,7 @@ function Home() {
     setMouseSobreHero(true)
 
 
-    if (!peliculaHero.videoUrl) {
+    if (!peliculaHero?.videoUrl) {
       return
     }
 
@@ -539,6 +472,17 @@ function Home() {
 
 
   // ==========================================
+  // CAMBIO DE CONTENIDO DEL HERO
+  // ==========================================
+
+  useEffect(() => {
+
+    limpiarPreviewHero()
+
+  }, [heroActual])
+
+
+  // ==========================================
   // LIMPIEZA GENERAL
   // ==========================================
 
@@ -552,6 +496,135 @@ function Home() {
     }
 
   }, [])
+
+
+  // ==========================================
+  // CARGANDO CATÁLOGO
+  // ==========================================
+
+  if (cargandoContenidos) {
+
+    return (
+      <>
+        <Navbar />
+
+        <main
+          className="
+            min-vh-100
+            d-flex
+            justify-content-center
+            align-items-center
+            bg-dark
+            text-white
+          "
+        >
+          <div className="text-center">
+
+            <div
+              className="
+                spinner-border
+                text-danger
+                mb-3
+              "
+              role="status"
+            >
+              <span className="visually-hidden">
+                Cargando...
+              </span>
+            </div>
+
+            <p>
+              Cargando catálogo...
+            </p>
+
+          </div>
+        </main>
+
+        <Footer />
+      </>
+    )
+  }
+
+
+  // ==========================================
+  // ERROR AL CARGAR
+  // ==========================================
+
+  if (errorContenidos) {
+
+    return (
+      <>
+        <Navbar />
+
+        <main
+          className="
+            min-vh-100
+            d-flex
+            justify-content-center
+            align-items-center
+            bg-dark
+            text-white
+          "
+        >
+          <div className="text-center">
+
+            <h2 className="fw-bold mb-3">
+              No pudimos cargar el catálogo
+            </h2>
+
+            <p className="text-secondary">
+              {errorContenidos}
+            </p>
+
+          </div>
+        </main>
+
+        <Footer />
+      </>
+    )
+  }
+
+
+  // ==========================================
+  // CATÁLOGO VACÍO
+  // ==========================================
+
+  if (
+    contenidos.length === 0 ||
+    !peliculaHero
+  ) {
+
+    return (
+      <>
+        <Navbar />
+
+        <main
+          className="
+            min-vh-100
+            d-flex
+            justify-content-center
+            align-items-center
+            bg-dark
+            text-white
+          "
+        >
+          <div className="text-center">
+
+            <h2 className="fw-bold mb-3">
+              Catálogo vacío
+            </h2>
+
+            <p className="text-secondary">
+              Todavía no hay contenidos disponibles.
+            </p>
+
+          </div>
+        </main>
+
+        <Footer />
+      </>
+    )
+  }
 
 
   // ==========================================
@@ -759,6 +832,13 @@ function Home() {
 
                   {peliculaHero.genero}
 
+                  {peliculaHero.anio && (
+                    <>
+                      {' • '}
+                      {peliculaHero.anio}
+                    </>
+                  )}
+
                 </p>
 
 
@@ -776,39 +856,21 @@ function Home() {
                   "
                 >
 
-                  {peliculaHero.apiId ? (
+                  <button
+                    className="
+                      btn
+                      btn-streaming
+                      btn-lg
+                    "
 
-                    <button
-                      className="
-                        btn
-                        btn-streaming
-                        btn-lg
-                      "
-
-                      onClick={() =>
-                        reproducirContenido(
-                          peliculaHero
-                        )
-                      }
-                    >
-                      ▶ Reproducir
-                    </button>
-
-                  ) : (
-
-                    <button
-                      className="
-                        btn
-                        btn-secondary
-                        btn-lg
-                      "
-
-                      disabled
-                    >
-                      Próximamente
-                    </button>
-
-                  )}
+                    onClick={() =>
+                      reproducirContenido(
+                        peliculaHero
+                      )
+                    }
+                  >
+                    ▶ Reproducir
+                  </button>
 
 
                   <button
@@ -834,48 +896,56 @@ function Home() {
               FLECHA IZQUIERDA
           ================================== */}
 
-          <button
-            className="
-              hero-arrow
-              hero-arrow-left
-            "
+          {contenidos.length > 1 && (
 
-            style={{
-              zIndex: 5
-            }}
+            <button
+              className="
+                hero-arrow
+                hero-arrow-left
+              "
 
-            onClick={
-              anteriorHero
-            }
+              style={{
+                zIndex: 5
+              }}
 
-            aria-label="Película anterior"
-          >
-            ‹
-          </button>
+              onClick={
+                anteriorHero
+              }
+
+              aria-label="Contenido anterior"
+            >
+              ‹
+            </button>
+
+          )}
 
 
           {/* =================================
               FLECHA DERECHA
           ================================== */}
 
-          <button
-            className="
-              hero-arrow
-              hero-arrow-right
-            "
+          {contenidos.length > 1 && (
 
-            style={{
-              zIndex: 5
-            }}
+            <button
+              className="
+                hero-arrow
+                hero-arrow-right
+              "
 
-            onClick={
-              siguienteHero
-            }
+              style={{
+                zIndex: 5
+              }}
 
-            aria-label="Película siguiente"
-          >
-            ›
-          </button>
+              onClick={
+                siguienteHero
+              }
+
+              aria-label="Contenido siguiente"
+            >
+              ›
+            </button>
+
+          )}
 
 
           {/* =================================
@@ -943,13 +1013,13 @@ function Home() {
             <div className="mb-4">
 
               <h2 className="fw-bold mb-2">
-                Películas destacadas
+                Contenidos destacados
               </h2>
 
 
               <p className="text-secondary mb-0">
-                Descubrí películas seleccionadas
-                para vos.
+                Descubrí películas y series
+                seleccionadas para vos.
               </p>
 
             </div>
