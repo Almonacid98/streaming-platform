@@ -47,6 +47,82 @@ function Player() {
 
 
   // ==========================================
+  // SUBTÍTULOS
+  // ==========================================
+
+  /*
+    Por ahora Solo Leveling es el contenido que
+    tiene pistas WebVTT disponibles.
+
+    Más adelante esta información puede venir
+    directamente desde la API.
+  */
+
+  const obtenerSubtitulos = () => {
+
+    if (Number(id) !== 5) {
+      return []
+    }
+
+    const baseUrl =
+      'http://localhost:8081/solo_leveling_ep1'
+
+    return [
+      {
+        src: `${baseUrl}/subtitles_es_latino.vtt`,
+        srcLang: 'es-419',
+        label: 'Español (Latinoamérica)',
+        default: true
+      },
+      {
+        src: `${baseUrl}/subtitles_es.vtt`,
+        srcLang: 'es',
+        label: 'Español'
+      },
+      {
+        src: `${baseUrl}/subtitles_en.vtt`,
+        srcLang: 'en',
+        label: 'English'
+      },
+      {
+        src: `${baseUrl}/subtitles_pt_br.vtt`,
+        srcLang: 'pt-BR',
+        label: 'Português (Brasil)'
+      },
+      {
+        src: `${baseUrl}/subtitles_fr.vtt`,
+        srcLang: 'fr',
+        label: 'Français'
+      },
+      {
+        src: `${baseUrl}/subtitles_de.vtt`,
+        srcLang: 'de',
+        label: 'Deutsch'
+      },
+      {
+        src: `${baseUrl}/subtitles_it.vtt`,
+        srcLang: 'it',
+        label: 'Italiano'
+      },
+      {
+        src: `${baseUrl}/subtitles_ru.vtt`,
+        srcLang: 'ru',
+        label: 'Русский'
+      },
+      {
+        src: `${baseUrl}/subtitles_ar.vtt`,
+        srcLang: 'ar',
+        label: 'العربية'
+      }
+    ]
+  }
+
+
+  const subtitulos =
+    obtenerSubtitulos()
+
+
+  // ==========================================
   // FORMATEAR TIEMPO
   // ==========================================
 
@@ -768,6 +844,7 @@ function Player() {
             <video
               ref={videoRef}
               controls={decisionTomada}
+              crossOrigin="anonymous"
               className="w-100"
 
               onPause={
@@ -778,6 +855,25 @@ function Player() {
                 manejarFinalizado
               }
             >
+
+              {subtitulos.map(
+                (subtitulo) => (
+
+                  <track
+                    key={subtitulo.src}
+                    kind="subtitles"
+                    src={subtitulo.src}
+                    srcLang={subtitulo.srcLang}
+                    label={subtitulo.label}
+                    default={
+                      Boolean(
+                        subtitulo.default
+                      )
+                    }
+                  />
+
+                )
+              )}
 
               Tu navegador no soporta
               reproducción de video.
