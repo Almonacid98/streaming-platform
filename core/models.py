@@ -21,27 +21,36 @@ class Contenido(models.Model):
 
     duracion_min = models.PositiveIntegerField()
 
-    # Trailer / preview
+    # Trailer / preview del contenido
     video_url = models.URLField(
         max_length=1000,
         blank=True,
         null=True
     )
 
+    # ID del video almacenado en Cloudinary
     video_public_id = models.CharField(
         max_length=500,
         blank=True,
         null=True
     )
 
-    # Película / contenido completo en HLS
+    # URL del contenido completo en formato HLS
     video_hls_url = models.URLField(
         max_length=1000,
         blank=True,
         null=True
     )
 
+    # Imagen vertical utilizada en las tarjetas
     portada_url = models.URLField(
+        max_length=1000,
+        blank=True,
+        null=True
+    )
+
+    # Imagen horizontal utilizada en el Hero
+    hero_url = models.URLField(
         max_length=1000,
         blank=True,
         null=True
@@ -82,8 +91,14 @@ class Visualizacion(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['usuario', 'contenido'],
-                name='visualizacion_unica_por_usuario_contenido'
+                fields=[
+                    'usuario',
+                    'contenido'
+                ],
+                name=(
+                    'visualizacion_unica_por_'
+                    'usuario_contenido'
+                )
             )
         ]
 
