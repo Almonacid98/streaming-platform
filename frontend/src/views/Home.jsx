@@ -217,6 +217,23 @@ function Home() {
 
 
   // ==========================================
+  // VER DETALLE DEL CONTENIDO
+  // ==========================================
+
+  const verDetalleContenido = (contenido) => {
+
+    if (!contenido?.apiId) {
+      return
+    }
+
+
+    navigate(
+      `/content/${contenido.apiId}`
+    )
+  }
+
+
+  // ==========================================
   // SLIDER
   // ==========================================
 
@@ -879,6 +896,12 @@ function Home() {
                       btn-outline-light
                       btn-lg
                     "
+
+                    onClick={() =>
+                      verDetalleContenido(
+                        peliculaHero
+                      )
+                    }
                   >
                     Más información
                   </button>
@@ -1100,6 +1123,12 @@ function Home() {
 
                       onReproducir={() =>
                         reproducirContenido(
+                          contenido
+                        )
+                      }
+
+                      onVerDetalle={() =>
+                        verDetalleContenido(
                           contenido
                         )
                       }

@@ -8,6 +8,7 @@ import Home from './views/Home'
 import Login from './views/Login'
 import Register from './views/Register'
 import Player from './views/Player'
+import ContentDetail from './views/ContentDetail'
 
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -31,6 +32,15 @@ function App() {
         element={
           <ProtectedRoute>
             <Home />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/content/:id"
+        element={
+          <ProtectedRoute>
+            <ContentDetail />
           </ProtectedRoute>
         }
       />
