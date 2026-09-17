@@ -9,6 +9,7 @@ import Login from './views/Login'
 import Register from './views/Register'
 import Player from './views/Player'
 import ContentDetail from './views/ContentDetail'
+import Catalog from './views/Catalog'
 
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -32,6 +33,15 @@ function App() {
         element={
           <ProtectedRoute>
             <Home />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/catalog"
+        element={
+          <ProtectedRoute>
+            <Catalog />
           </ProtectedRoute>
         }
       />

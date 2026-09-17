@@ -1,5 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+
+import {
+  NavLink,
+  useNavigate
+} from 'react-router-dom'
 
 import { useAuth } from '../context/AuthContext'
 
@@ -37,9 +41,9 @@ function Navbar() {
 
         {/* LOGO */}
 
-        <a
+        <NavLink
           className="navbar-brand streaming-logo"
-          href="#"
+          to="/"
         >
 
           <span className="logo-stream">
@@ -50,7 +54,7 @@ function Navbar() {
             PLATFORM
           </span>
 
-        </a>
+        </NavLink>
 
 
         {/* BOTÓN RESPONSIVE */}
@@ -82,12 +86,35 @@ function Navbar() {
 
             <li className="nav-item">
 
-              <a
-                className="nav-link active"
-                href="#"
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? 'nav-link active'
+                    : 'nav-link'
+                }
+                to="/"
+                end
               >
                 Inicio
-              </a>
+              </NavLink>
+
+            </li>
+
+
+            {/* CATÁLOGO */}
+
+            <li className="nav-item">
+
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? 'nav-link active'
+                    : 'nav-link'
+                }
+                to="/catalog"
+              >
+                Catálogo
+              </NavLink>
 
             </li>
 
@@ -96,12 +123,12 @@ function Navbar() {
 
             <li className="nav-item">
 
-              <a
+              <NavLink
                 className="nav-link"
-                href="#"
+                to="/catalog?tipo=pelicula"
               >
                 Películas
-              </a>
+              </NavLink>
 
             </li>
 
@@ -110,12 +137,12 @@ function Navbar() {
 
             <li className="nav-item">
 
-              <a
+              <NavLink
                 className="nav-link"
-                href="#"
+                to="/catalog?tipo=serie"
               >
                 Series
-              </a>
+              </NavLink>
 
             </li>
 
