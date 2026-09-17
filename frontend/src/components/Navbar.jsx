@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+
 import { useAuth } from '../context/AuthContext'
 
 
@@ -8,14 +10,21 @@ function Navbar() {
 
   const { usuario, logout } = useAuth()
 
+  const [cerrandoSesion, setCerrandoSesion] =
+    useState(false)
 
-  // Cerrar la sesión actual
-  const handleLogout = () => {
 
-    logout()
+  // ==========================================
+  // CERRAR SESIÓN
+  // ==========================================
+
+  const handleLogout = async () => {
+
+    setCerrandoSesion(true)
+
+    await logout()
 
     navigate('/login')
-
   }
 
 
@@ -27,6 +36,7 @@ function Navbar() {
 
 
         {/* LOGO */}
+
         <a
           className="navbar-brand streaming-logo"
           href="#"
@@ -44,6 +54,7 @@ function Navbar() {
 
 
         {/* BOTÓN RESPONSIVE */}
+
         <button
           className="navbar-toggler"
           type="button"
@@ -68,6 +79,7 @@ function Navbar() {
 
 
             {/* INICIO */}
+
             <li className="nav-item">
 
               <a
@@ -81,6 +93,7 @@ function Navbar() {
 
 
             {/* PELÍCULAS */}
+
             <li className="nav-item">
 
               <a
@@ -94,6 +107,7 @@ function Navbar() {
 
 
             {/* SERIES */}
+
             <li className="nav-item">
 
               <a
@@ -107,6 +121,7 @@ function Navbar() {
 
 
             {/* USUARIO AUTENTICADO */}
+
             {usuario && (
 
               <>
@@ -123,15 +138,21 @@ function Navbar() {
 
 
                 {/* CERRAR SESIÓN */}
+
                 <li className="nav-item ms-lg-2">
 
                   <button
                     type="button"
                     className="btn btn-outline-danger btn-sm"
                     onClick={handleLogout}
+                    disabled={cerrandoSesion}
                   >
 
-                    Cerrar sesión
+                    {
+                      cerrandoSesion
+                        ? 'Cerrando...'
+                        : 'Cerrar sesión'
+                    }
 
                   </button>
 

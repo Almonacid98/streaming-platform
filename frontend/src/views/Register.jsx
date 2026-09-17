@@ -10,18 +10,32 @@ function Register() {
   const navigate = useNavigate()
   const { register } = useAuth()
 
+
+  // ==========================================
+  // DATOS DEL FORMULARIO
+  // ==========================================
+
   const [formulario, setFormulario] = useState({
     username: '',
+    first_name: '',
+    last_name: '',
     email: '',
+    edad: '',
+    genero: '',
     password: '',
     confirmPassword: ''
   })
 
+
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [cargando, setCargando] = useState(false)
 
 
-  // Actualiza los campos del formulario
+  // ==========================================
+  // ACTUALIZAR CAMPOS
+  // ==========================================
+
   const handleChange = (event) => {
 
     const { name, value } = event.target
@@ -33,8 +47,11 @@ function Register() {
   }
 
 
-  // Procesa el registro
-  const handleSubmit = (event) => {
+  // ==========================================
+  // REGISTRO CON DJANGO
+  // ==========================================
+
+  const handleSubmit = async (event) => {
 
     event.preventDefault()
 
@@ -42,16 +59,27 @@ function Register() {
     setSuccess('')
 
 
-    // Verificar que las contraseñas coincidan
-    if (formulario.password !== formulario.confirmPassword) {
+    // ------------------------------------------
+    // Verificar contraseñas
+    // ------------------------------------------
 
-      setError('Las contraseñas no coinciden.')
+    if (
+      formulario.password !==
+      formulario.confirmPassword
+    ) {
+
+      setError(
+        'Las contraseñas no coinciden.'
+      )
 
       return
     }
 
 
-    // Validación básica
+    // ------------------------------------------
+    // Validar contraseña
+    // ------------------------------------------
+
     if (formulario.password.length < 4) {
 
       setError(
@@ -62,12 +90,60 @@ function Register() {
     }
 
 
-    const resultado = register({
+    // ------------------------------------------
+    // Validar edad
+    // ------------------------------------------
+
+    if (
+      formulario.edad !== '' &&
+      Number(formulario.edad) <= 0
+    ) {
+
+      setError(
+        'Ingresá una edad válida.'
+      )
+
+      return
+    }
+
+
+    setCargando(true)
+
+
+    // ==========================================
+    // ENVIAR DATOS AL BACKEND
+    // ==========================================
+
+    const resultado = await register({
+
       username: formulario.username,
+
+      first_name: formulario.first_name,
+
+      last_name: formulario.last_name,
+
       email: formulario.email,
-      password: formulario.password
+
+      password: formulario.password,
+
+      edad:
+        formulario.edad !== ''
+          ? Number(formulario.edad)
+          : null,
+
+      genero:
+        formulario.genero !== ''
+          ? formulario.genero
+          : null
     })
 
+
+    setCargando(false)
+
+
+    // ==========================================
+    // ERROR DEL BACKEND
+    // ==========================================
 
     if (!resultado.success) {
 
@@ -77,14 +153,19 @@ function Register() {
     }
 
 
+    // ==========================================
+    // REGISTRO EXITOSO
+    // ==========================================
+
     setSuccess(
       'Cuenta creada correctamente. Redirigiendo al login...'
     )
 
 
-    // Pequeña pausa para mostrar el mensaje
     setTimeout(() => {
+
       navigate('/login')
+
     }, 1200)
   }
 
@@ -101,7 +182,9 @@ function Register() {
 
             <div className="auth-card">
 
+
               {/* LOGO */}
+
               <div className="text-center mb-4">
 
                 <h1 className="auth-logo">
@@ -121,6 +204,7 @@ function Register() {
 
 
               {/* ERROR */}
+
               {error && (
 
                 <div
@@ -134,6 +218,7 @@ function Register() {
 
 
               {/* REGISTRO EXITOSO */}
+
               {success && (
 
                 <div
@@ -147,10 +232,12 @@ function Register() {
 
 
               {/* FORMULARIO */}
+
               <form onSubmit={handleSubmit}>
 
 
                 {/* USUARIO */}
+
                 <div className="mb-3">
 
                   <label
@@ -169,12 +256,66 @@ function Register() {
                     onChange={handleChange}
                     placeholder="Elegí un nombre de usuario"
                     required
+                    disabled={cargando}
+                  />
+
+                </div>
+
+
+                {/* NOMBRE */}
+
+                <div className="mb-3">
+
+                  <label
+                    htmlFor="first_name"
+                    className="form-label"
+                  >
+                    Nombre
+                  </label>
+
+                  <input
+                    id="first_name"
+                    name="first_name"
+                    type="text"
+                    className="form-control auth-input"
+                    value={formulario.first_name}
+                    onChange={handleChange}
+                    placeholder="Ingresá tu nombre"
+                    required
+                    disabled={cargando}
+                  />
+
+                </div>
+
+
+                {/* APELLIDO */}
+
+                <div className="mb-3">
+
+                  <label
+                    htmlFor="last_name"
+                    className="form-label"
+                  >
+                    Apellido
+                  </label>
+
+                  <input
+                    id="last_name"
+                    name="last_name"
+                    type="text"
+                    className="form-control auth-input"
+                    value={formulario.last_name}
+                    onChange={handleChange}
+                    placeholder="Ingresá tu apellido"
+                    required
+                    disabled={cargando}
                   />
 
                 </div>
 
 
                 {/* EMAIL */}
+
                 <div className="mb-3">
 
                   <label
@@ -193,12 +334,85 @@ function Register() {
                     onChange={handleChange}
                     placeholder="nombre@email.com"
                     required
+                    disabled={cargando}
                   />
 
                 </div>
 
 
+                {/* EDAD */}
+
+                <div className="mb-3">
+
+                  <label
+                    htmlFor="edad"
+                    className="form-label"
+                  >
+                    Edad
+                  </label>
+
+                  <input
+                    id="edad"
+                    name="edad"
+                    type="number"
+                    className="form-control auth-input"
+                    value={formulario.edad}
+                    onChange={handleChange}
+                    placeholder="Ingresá tu edad"
+                    min="1"
+                    disabled={cargando}
+                  />
+
+                </div>
+
+
+                {/* GÉNERO */}
+
+                <div className="mb-3">
+
+                  <label
+                    htmlFor="genero"
+                    className="form-label"
+                  >
+                    Género
+                  </label>
+
+                  <select
+                    id="genero"
+                    name="genero"
+                    className="form-select auth-input"
+                    value={formulario.genero}
+                    onChange={handleChange}
+                    disabled={cargando}
+                  >
+
+                    <option value="">
+                      Seleccioná una opción
+                    </option>
+
+                    <option value="masculino">
+                      Masculino
+                    </option>
+
+                    <option value="femenino">
+                      Femenino
+                    </option>
+
+                    <option value="otro">
+                      Otro
+                    </option>
+
+                    <option value="prefiero_no_decir">
+                      Prefiero no decir
+                    </option>
+
+                  </select>
+
+                </div>
+
+
                 {/* CONTRASEÑA */}
+
                 <div className="mb-3">
 
                   <label
@@ -217,12 +431,14 @@ function Register() {
                     onChange={handleChange}
                     placeholder="Creá una contraseña"
                     required
+                    disabled={cargando}
                   />
 
                 </div>
 
 
                 {/* REPETIR CONTRASEÑA */}
+
                 <div className="mb-4">
 
                   <label
@@ -241,23 +457,33 @@ function Register() {
                     onChange={handleChange}
                     placeholder="Repetí la contraseña"
                     required
+                    disabled={cargando}
                   />
 
                 </div>
 
 
                 {/* BOTÓN */}
+
                 <button
                   type="submit"
                   className="btn btn-streaming w-100 py-2"
+                  disabled={cargando}
                 >
-                  Crear cuenta
+
+                  {
+                    cargando
+                      ? 'Creando cuenta...'
+                      : 'Crear cuenta'
+                  }
+
                 </button>
 
               </form>
 
 
               {/* VOLVER AL LOGIN */}
+
               <div className="text-center mt-4">
 
                 <span className="text-secondary">
