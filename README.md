@@ -304,6 +304,26 @@ indicando que el token fue revocado correctamente.
 * Permite invalidar credenciales antes de su fecha de expiración.
 * Implementa un mecanismo de cierre de sesión compatible con JWT.
 * Facilita el control de acceso en APIs REST modernas.
+
+---
+
+# 📌 Trabajo Práctico N°4 — Backend y Autenticación
+
+En esta etapa del proyecto se consolidó el backend de **Streaming Platform** mediante Django REST Framework.
+
+Entre las funcionalidades desarrolladas se encuentran:
+
+- API REST para usuarios, contenidos y visualizaciones.
+- Registro y gestión de usuarios.
+- Roles de usuario y control de permisos.
+- Autenticación mediante JWT.
+- Access Token y Refresh Token.
+- Renovación de credenciales.
+- Logout mediante blacklist de Refresh Tokens.
+- Protección de endpoints según autenticación y rol.
+- Documentación de la API mediante Swagger.
+
+Este backend sirve como base para la posterior integración con el frontend desarrollado en React.
 ---
 
 # TP5 - Inicio del Proyecto React
@@ -369,4 +389,5 @@ Esta estructura permitirá incorporar posteriormente funcionalidades como autent
 
 ✔ Servidor de desarrollo configurado en **http://localhost:3000**.
 
-✔ Arquitectura inicial documentada para comenzar el desarrollo de la interfaz de usuario en los próximos trabajos prácticos.
+✔ Arquitectura inicial documentada para comenzar el desarrollo de la interfaz de usuario en los próximos trabajos prácticos.O
+
