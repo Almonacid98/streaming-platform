@@ -7,23 +7,12 @@ import {
 
 import { useAuth } from '../context/AuthContext'
 
-
 function Navbar() {
-
   const navigate = useNavigate()
-
   const { usuario, logout } = useAuth()
-
-  const [cerrandoSesion, setCerrandoSesion] =
-    useState(false)
-
-
-  // ==========================================
-  // CERRAR SESIÓN
-  // ==========================================
+  const [cerrandoSesion, setCerrandoSesion] = useState(false)
 
   const handleLogout = async () => {
-
     setCerrandoSesion(true)
 
     await logout()
@@ -31,21 +20,14 @@ function Navbar() {
     navigate('/login')
   }
 
-
   return (
-
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-
       <div className="container">
-
-
-        {/* LOGO */}
 
         <NavLink
           className="navbar-brand streaming-logo"
           to="/"
         >
-
           <span className="logo-stream">
             STREAM
           </span>
@@ -53,11 +35,7 @@ function Navbar() {
           <span className="logo-platform">
             PLATFORM
           </span>
-
         </NavLink>
-
-
-        {/* BOTÓN RESPONSIVE */}
 
         <button
           className="navbar-toggler"
@@ -68,24 +46,16 @@ function Navbar() {
           aria-expanded="false"
           aria-label="Abrir navegación"
         >
-
           <span className="navbar-toggler-icon"></span>
-
         </button>
-
 
         <div
           className="collapse navbar-collapse"
           id="navbarMenu"
         >
-
           <ul className="navbar-nav ms-auto align-items-lg-center">
 
-
-            {/* INICIO */}
-
             <li className="nav-item">
-
               <NavLink
                 className={({ isActive }) =>
                   isActive
@@ -97,14 +67,9 @@ function Navbar() {
               >
                 Inicio
               </NavLink>
-
             </li>
 
-
-            {/* CATÁLOGO */}
-
             <li className="nav-item">
-
               <NavLink
                 className={({ isActive }) =>
                   isActive
@@ -115,90 +80,68 @@ function Navbar() {
               >
                 Catálogo
               </NavLink>
-
             </li>
 
-
-            {/* PELÍCULAS */}
-
             <li className="nav-item">
-
               <NavLink
                 className="nav-link"
                 to="/catalog?tipo=pelicula"
               >
                 Películas
               </NavLink>
-
             </li>
 
-
-            {/* SERIES */}
-
             <li className="nav-item">
-
               <NavLink
                 className="nav-link"
                 to="/catalog?tipo=serie"
               >
                 Series
               </NavLink>
-
             </li>
 
-
-            {/* USUARIO AUTENTICADO */}
+            <li className="nav-item">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? 'nav-link active'
+                    : 'nav-link'
+                }
+                to="/history"
+              >
+                Historial
+              </NavLink>
+            </li>
 
             {usuario && (
-
               <>
-
                 <li className="nav-item">
-
                   <span className="nav-link">
-
                     Hola, {usuario.username}
-
                   </span>
-
                 </li>
 
-
-                {/* CERRAR SESIÓN */}
-
                 <li className="nav-item ms-lg-2">
-
                   <button
                     type="button"
                     className="btn btn-outline-danger btn-sm"
                     onClick={handleLogout}
                     disabled={cerrandoSesion}
                   >
-
-                    {
-                      cerrandoSesion
-                        ? 'Cerrando...'
-                        : 'Cerrar sesión'
-                    }
-
+                    {cerrandoSesion
+                      ? 'Cerrando...'
+                      : 'Cerrar sesión'}
                   </button>
-
                 </li>
-
               </>
-
             )}
 
           </ul>
-
         </div>
 
       </div>
-
     </nav>
-
   )
 }
-
 
 export default Navbar

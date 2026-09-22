@@ -10,14 +10,13 @@ import Register from './views/Register'
 import Player from './views/Player'
 import ContentDetail from './views/ContentDetail'
 import Catalog from './views/Catalog'
+import WatchHistory from './views/WatchHistory'
 
 import ProtectedRoute from './components/ProtectedRoute'
-
 
 function App() {
   return (
     <Routes>
-
       <Route
         path="/login"
         element={<Login />}
@@ -47,6 +46,15 @@ function App() {
       />
 
       <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <WatchHistory />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/content/:id"
         element={
           <ProtectedRoute>
@@ -66,14 +74,8 @@ function App() {
 
       <Route
         path="*"
-        element={
-          <Navigate
-            to="/"
-            replace
-          />
-        }
+        element={<Navigate to="/" replace />}
       />
-
     </Routes>
   )
 }
