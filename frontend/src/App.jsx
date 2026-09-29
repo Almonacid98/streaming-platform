@@ -11,12 +11,17 @@ import Player from './views/Player'
 import ContentDetail from './views/ContentDetail'
 import Catalog from './views/Catalog'
 import WatchHistory from './views/WatchHistory'
+import Profile from './views/Profile'
 
 import ProtectedRoute from './components/ProtectedRoute'
+
 
 function App() {
   return (
     <Routes>
+
+      {/* Rutas públicas */}
+
       <Route
         path="/login"
         element={<Login />}
@@ -27,6 +32,9 @@ function App() {
         element={<Register />}
       />
 
+
+      {/* Inicio */}
+
       <Route
         path="/"
         element={
@@ -35,6 +43,9 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+
+      {/* Catálogo */}
 
       <Route
         path="/catalog"
@@ -45,14 +56,8 @@ function App() {
         }
       />
 
-      <Route
-        path="/history"
-        element={
-          <ProtectedRoute>
-            <WatchHistory />
-          </ProtectedRoute>
-        }
-      />
+
+      {/* Detalle de contenido */}
 
       <Route
         path="/content/:id"
@@ -63,6 +68,9 @@ function App() {
         }
       />
 
+
+      {/* Reproductor */}
+
       <Route
         path="/watch/:id"
         element={
@@ -72,10 +80,43 @@ function App() {
         }
       />
 
+
+      {/* Historial */}
+
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <WatchHistory />
+          </ProtectedRoute>
+        }
+      />
+
+
+      {/* Perfil */}
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+
+
+      {/* Ruta no encontrada */}
+
       <Route
         path="*"
-        element={<Navigate to="/" replace />}
+        element={
+          <Navigate
+            to="/"
+            replace
+          />
+        }
       />
+
     </Routes>
   )
 }

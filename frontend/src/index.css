@@ -2188,3 +2188,179 @@ compactamos ligeramente el texto.
   }
 
 }
+/* ==========================================
+   PROFILE
+   ========================================== */
+
+.profile-card {
+  max-width: 900px;
+
+  padding: 32px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #111 0%,
+      #080808 100%
+    );
+
+  border:
+    1px solid rgba(
+      255,
+      255,
+      255,
+      0.12
+    );
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 20px 50px
+    rgba(0, 0, 0, 0.35);
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+
+  gap: 24px;
+}
+
+.profile-avatar {
+  width: 90px;
+  height: 90px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      135deg,
+      #e50914,
+      #8b0007
+    );
+
+  color: #fff;
+
+  font-size: 2.5rem;
+  font-weight: 800;
+
+  box-shadow:
+    0 10px 30px
+    rgba(229, 9, 20, 0.25);
+}
+
+.profile-role {
+  display: inline-block;
+
+  padding: 5px 10px;
+
+  border-radius: 20px;
+
+  background:
+    rgba(229, 9, 20, 0.15);
+
+  border:
+    1px solid
+    rgba(229, 9, 20, 0.35);
+
+  color: #ff4d55;
+
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.08rem;
+}
+
+.profile-divider {
+  height: 1px;
+
+  margin: 30px 0;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.1
+    );
+}
+
+.profile-information {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+.profile-field {
+  padding: 18px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.035
+    );
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.08
+    );
+
+  border-radius: 10px;
+}
+
+.profile-field span {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #8d8d8d;
+
+  font-size: 0.8rem;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.05rem;
+}
+
+.profile-field strong {
+  color: #fff;
+
+  font-size: 1rem;
+
+  word-break: break-word;
+}
+
+
+@media (max-width: 767px) {
+
+  .profile-card {
+    padding: 22px;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-information {
+    grid-template-columns: 1fr;
+  }
+
+}
