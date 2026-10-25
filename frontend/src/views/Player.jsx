@@ -26,6 +26,11 @@ function Player() {
   const [contenido, setContenido] =
     useState(null)
 
+  // URL temporal firmada generada por Django
+  // para reproducir contenido privado desde Backblaze B2.
+  const [videoB2Url, setVideoB2Url] =
+    useState(null)
+
   const [progresoGuardado, setProgresoGuardado] =
     useState(0)
 
@@ -156,7 +161,12 @@ function Player() {
 
         setLoading(true)
         setError('')
+        setVideoB2Url(null)
 
+
+        // ======================================
+        // CARGAR INFORMACIÓN DEL CONTENIDO
+        // ======================================
 
         const responseContenido =
           await fetch(
@@ -175,6 +185,59 @@ function Player() {
         const dataContenido =
           await responseContenido.json()
 
+
+        // ======================================
+        // BACKBLAZE B2
+        // ======================================
+
+        /*
+          Si el contenido tiene un objeto asociado
+          en Backblaze B2, solicitamos a Django una
+          URL firmada temporal.
+
+          Las credenciales de B2 nunca llegan
+          al frontend.
+        */
+
+        let b2Url = null
+
+        if (dataContenido.video_b2_key) {
+
+          console.log(
+            'Contenido disponible en Backblaze B2.'
+          )
+
+          const responsePlay =
+            await authFetch(
+              `${API_URL}/contenidos/${id}/play/`
+            )
+
+
+          if (!responsePlay.ok) {
+
+            throw new Error(
+              'No se pudo obtener el video desde Backblaze B2.'
+            )
+          }
+
+
+          const dataPlay =
+            await responsePlay.json()
+
+
+          b2Url =
+            dataPlay.video_url
+
+
+          console.log(
+            'URL temporal de Backblaze B2 obtenida correctamente.'
+          )
+        }
+
+
+        // ======================================
+        // CARGAR PROGRESO
+        // ======================================
 
         const responseVisualizaciones =
           await authFetch(
@@ -216,6 +279,10 @@ function Player() {
             dataContenido
           )
 
+          setVideoB2Url(
+            b2Url
+          )
+
           setProgresoGuardado(
             progreso || 0
           )
@@ -244,6 +311,7 @@ function Player() {
         if (activo) {
 
           setError(
+            error.message ||
             'No se pudo cargar el reproductor.'
           )
         }
@@ -268,7 +336,7 @@ function Player() {
 
 
   // ==========================================
-  // CONFIGURAR VIDEO / HLS
+  // CONFIGURAR VIDEO / B2 / HLS
   // ==========================================
 
   useEffect(() => {
@@ -282,6 +350,9 @@ function Player() {
     }
 
 
+    const b2Url =
+      videoB2Url
+
     const hlsUrl =
       contenido.video_hls_url
 
@@ -290,7 +361,29 @@ function Player() {
 
 
     // ========================================
-    // PRIORIDAD 1: HLS
+    // PRIORIDAD 1: BACKBLAZE B2
+    // ========================================
+
+    if (b2Url) {
+
+      console.log(
+        'Cargando video desde Backblaze B2.'
+      )
+
+      video.src = b2Url
+
+
+      return () => {
+
+        video.pause()
+        video.removeAttribute('src')
+        video.load()
+      }
+    }
+
+
+    // ========================================
+    // PRIORIDAD 2: HLS
     // ========================================
 
     if (hlsUrl) {
@@ -311,6 +404,7 @@ function Player() {
       ) {
 
         video.src = hlsUrl
+
 
         return () => {
 
@@ -387,7 +481,7 @@ function Player() {
 
 
     // ========================================
-    // PRIORIDAD 2: VIDEO DIRECTO
+    // PRIORIDAD 3: VIDEO DIRECTO
     // ========================================
 
     if (videoUrl) {
@@ -414,10 +508,10 @@ function Player() {
     // ========================================
 
     console.warn(
-      'El contenido no tiene video_hls_url ni video_url.'
+      'El contenido no tiene video disponible.'
     )
 
-  }, [contenido])
+  }, [contenido, videoB2Url])
 
 
   // ==========================================
@@ -781,6 +875,7 @@ function Player() {
 
   const hayVideo =
     Boolean(
+      videoB2Url ||
       contenido.video_hls_url ||
       contenido.video_url
     )

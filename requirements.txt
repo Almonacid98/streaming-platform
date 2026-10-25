@@ -6,3 +6,4 @@ djangorestframework-simplejwt==5.5.1
 psycopg[binary]==3.3.3
 cloudinary==1.44.1
 python-dotenv==1.1.1
+boto3

@@ -8,14 +8,18 @@ class Contenido(models.Model):
         PELICULA = 'pelicula', 'Película'
         SERIE = 'serie', 'Serie'
 
-    titulo = models.CharField(max_length=200)
+    titulo = models.CharField(
+        max_length=200
+    )
 
     tipo = models.CharField(
         max_length=20,
         choices=Tipos.choices
     )
 
-    genero = models.CharField(max_length=100)
+    genero = models.CharField(
+        max_length=100
+    )
 
     anio = models.IntegerField()
 
@@ -27,14 +31,14 @@ class Contenido(models.Model):
         default=''
     )
 
-    # Trailer / preview del contenido
+    # Trailer / preview del contenido en Cloudinary
     video_url = models.URLField(
         max_length=1000,
         blank=True,
         null=True
     )
 
-    # ID del video almacenado en Cloudinary
+    # ID del trailer almacenado en Cloudinary
     video_public_id = models.CharField(
         max_length=500,
         blank=True,
@@ -42,8 +46,23 @@ class Contenido(models.Model):
     )
 
     # URL del contenido completo en formato HLS
+    # Se mantiene como alternativa para desarrollo/local
     video_hls_url = models.URLField(
         max_length=1000,
+        blank=True,
+        null=True
+    )
+
+    # Ruta del contenido completo almacenado en Backblaze B2.
+    #
+    # Se utiliza principalmente para películas.
+    #
+    # Ejemplo:
+    # movies/interstellar/interstellar.mp4
+    #
+    # No guarda una URL firmada porque esas URLs expiran.
+    video_b2_key = models.CharField(
+        max_length=500,
         blank=True,
         null=True
     )
@@ -72,6 +91,85 @@ class Contenido(models.Model):
         return self.titulo
 
 
+# ==========================================
+# EPISODIOS
+# ==========================================
+
+class Episodio(models.Model):
+
+    serie = models.ForeignKey(
+        Contenido,
+        on_delete=models.CASCADE,
+        related_name='episodios'
+    )
+
+    temporada = models.PositiveIntegerField(
+        default=1
+    )
+
+    numero = models.PositiveIntegerField()
+
+    titulo = models.CharField(
+        max_length=200
+    )
+
+    descripcion = models.TextField(
+        blank=True,
+        default=''
+    )
+
+    duracion_min = models.PositiveIntegerField()
+
+    # Video completo del episodio en Backblaze B2.
+    #
+    # Ejemplo:
+    # series/solo-leveling/season-1/episode-01.mp4
+    #
+    # Se guarda únicamente la key del objeto.
+    # Django generará la URL firmada al reproducirlo.
+    video_b2_key = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True
+    )
+
+    # HLS local / desarrollo.
+    # Lo mantenemos porque actualmente Solo Leveling
+    # utiliza HLS y no queremos romperlo.
+    video_hls_url = models.URLField(
+        max_length=1000,
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+
+        ordering = [
+            'temporada',
+            'numero'
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    'serie',
+                    'temporada',
+                    'numero'
+                ],
+                name='episodio_unico_por_serie_temporada_numero'
+            )
+        ]
+
+    def __str__(self):
+
+        return (
+            f"{self.serie.titulo} - "
+            f"T{self.temporada} "
+            f"E{self.numero} - "
+            f"{self.titulo}"
+        )
+
+
 class Visualizacion(models.Model):
 
     usuario = models.ForeignKey(
@@ -95,6 +193,7 @@ class Visualizacion(models.Model):
     )
 
     class Meta:
+
         constraints = [
             models.UniqueConstraint(
                 fields=[
@@ -109,6 +208,7 @@ class Visualizacion(models.Model):
         ]
 
     def __str__(self):
+
         return (
             f"{self.usuario} - "
             f"{self.contenido} - "

@@ -335,3 +335,10 @@ LOGGING = {
     'disable_existing_loggers':
         False,
 }
+
+# Backblaze B2
+B2_KEY_ID = os.getenv('B2_KEY_ID')
+B2_APPLICATION_KEY = os.getenv('B2_APPLICATION_KEY')
+B2_BUCKET_NAME = os.getenv('B2_BUCKET_NAME')
+B2_ENDPOINT = os.getenv('B2_ENDPOINT')
+B2_REGION = os.getenv('B2_REGION')

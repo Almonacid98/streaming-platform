@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Contenido, Visualizacion
+from .models import Contenido, Episodio, Visualizacion
 from users.models import User
 
 
@@ -16,9 +16,36 @@ class UserBasicSerializer(serializers.ModelSerializer):
         ]
 
 
+class EpisodioSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Episodio
+
+        fields = [
+            'id',
+            'serie',
+            'temporada',
+            'numero',
+            'titulo',
+            'descripcion',
+            'duracion_min',
+            'video_b2_key',
+            'video_hls_url',
+        ]
+
+        read_only_fields = [
+            'id',
+        ]
+
+
 class ContenidoSerializer(serializers.ModelSerializer):
 
     creador = UserBasicSerializer(
+        read_only=True
+    )
+
+    episodios = EpisodioSerializer(
+        many=True,
         read_only=True
     )
 
@@ -36,15 +63,18 @@ class ContenidoSerializer(serializers.ModelSerializer):
             'video_url',
             'video_public_id',
             'video_hls_url',
+            'video_b2_key',
             'portada_url',
             'hero_url',
             'creador',
+            'episodios',
         ]
 
         read_only_fields = [
             'id',
             'video_public_id',
             'creador',
+            'episodios',
         ]
 
 

@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.db.models import Count
 
+import boto3
 import cloudinary.uploader
 
 from rest_framework import viewsets, filters, status
@@ -54,6 +56,10 @@ class ContenidoViewSet(viewsets.ModelViewSet):
             'retrieve'
         ]:
             return [AllowAny()]
+
+        # Reproducir contenido
+        if self.action == 'play':
+            return [IsAuthenticatedClient()]
 
         # Crear contenido
         if self.action == 'create':
@@ -143,6 +149,120 @@ class ContenidoViewSet(viewsets.ModelViewSet):
             )
 
         return queryset
+
+
+    # ======================================
+    # REPRODUCIR CONTENIDO DESDE B2
+    # ======================================
+
+    @action(
+        detail=True,
+        methods=['get'],
+        url_path='play'
+    )
+    def play(self, request, pk=None):
+
+        contenido = self.get_object()
+
+        # ----------------------------------
+        # COMPROBAR VIDEO EN B2
+        # ----------------------------------
+
+        if not contenido.video_b2_key:
+
+            return Response(
+                {
+                    'error':
+                        'Este contenido no tiene un '
+                        'video almacenado en Backblaze B2.'
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # ----------------------------------
+        # COMPROBAR CONFIGURACIÓN
+        # ----------------------------------
+
+        required_settings = [
+            settings.B2_KEY_ID,
+            settings.B2_APPLICATION_KEY,
+            settings.B2_BUCKET_NAME,
+            settings.B2_ENDPOINT,
+            settings.B2_REGION,
+        ]
+
+        if not all(required_settings):
+
+            return Response(
+                {
+                    'error':
+                        'La configuración de Backblaze B2 '
+                        'está incompleta.'
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        try:
+
+            # ----------------------------------
+            # CLIENTE S3 PARA BACKBLAZE B2
+            # ----------------------------------
+
+            s3 = boto3.client(
+                's3',
+                endpoint_url=settings.B2_ENDPOINT,
+                aws_access_key_id=settings.B2_KEY_ID,
+                aws_secret_access_key=(
+                    settings.B2_APPLICATION_KEY
+                ),
+                region_name=settings.B2_REGION
+            )
+
+            # ----------------------------------
+            # URL FIRMADA TEMPORAL
+            # ----------------------------------
+
+            video_url = s3.generate_presigned_url(
+                'get_object',
+                Params={
+                    'Bucket':
+                        settings.B2_BUCKET_NAME,
+                    'Key':
+                        contenido.video_b2_key
+                },
+                ExpiresIn=3600
+            )
+
+            return Response(
+                {
+                    'contenido_id':
+                        contenido.id,
+
+                    'titulo':
+                        contenido.titulo,
+
+                    'video_url':
+                        video_url,
+
+                    'expires_in':
+                        3600
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as error:
+
+            return Response(
+                {
+                    'error':
+                        'No se pudo generar la URL '
+                        'de reproducción.',
+
+                    'detalle':
+                        str(error)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
     # ======================================
@@ -251,6 +371,7 @@ class ContenidoViewSet(viewsets.ModelViewSet):
                 {
                     'message':
                         'Video subido correctamente.',
+
                     'contenido':
                         serializer.data
                 },
@@ -264,6 +385,7 @@ class ContenidoViewSet(viewsets.ModelViewSet):
                     'error':
                         'No se pudo subir el video '
                         'a Cloudinary.',
+
                     'detalle':
                         str(error)
                 },
