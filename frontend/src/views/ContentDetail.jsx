@@ -4,9 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
-
 const API_URL = import.meta.env.VITE_API_URL
-
 
 function ContentDetail() {
   const { id } = useParams()
@@ -15,9 +13,11 @@ function ContentDetail() {
   const [content, setContent] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
+  const [selectedSeason, setSelectedSeason] = useState(1)
 
   useEffect(() => {
+    let cancelled = false
+
     const loadContent = async () => {
       try {
         setLoading(true)
@@ -41,49 +41,89 @@ function ContentDetail() {
 
         const data = await response.json()
 
-        setContent(data)
+        if (!cancelled) {
+          setContent(data)
+
+          const firstSeason = data.episodios?.length
+            ? Math.min(
+                ...data.episodios.map(
+                  (episode) => episode.temporada
+                )
+              )
+            : 1
+
+          setSelectedSeason(firstSeason)
+        }
       } catch (error) {
         console.error(
           'Error al cargar el contenido:',
           error
         )
 
-        setError(
-          error.message ||
-          'Ocurrió un error al cargar el contenido.'
-        )
+        if (!cancelled) {
+          setError(
+            error.message ||
+            'Ocurrió un error al cargar el contenido.'
+          )
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
     loadContent()
+
+    return () => {
+      cancelled = true
+    }
   }, [id])
-
-
-  const handlePlay = () => {
-    navigate(`/watch/${id}`)
-  }
-
 
   const handleBack = () => {
     navigate('/')
   }
 
+  const handlePlay = () => {
+    navigate(`/watch/${id}`)
+  }
+
+  const isSeries =
+    content?.tipo?.toLowerCase() === 'serie'
+
+  const episodes = content?.episodios || []
+
+  const seasons = [
+    ...new Set(
+      episodes.map((episode) => episode.temporada)
+    )
+  ].sort((a, b) => a - b)
+
+  const filteredEpisodes = episodes
+    .filter(
+      (episode) =>
+        episode.temporada === selectedSeason
+    )
+    .sort((a, b) => a.numero - b.numero)
+
+  const hasMovieVideo = Boolean(
+    content?.video_b2_key ||
+    content?.video_hls_url ||
+    content?.video_url
+  )
+
+  const hasEpisodes = episodes.length > 0
+
+  const heroImage =
+    content?.hero_url ||
+    content?.portada_url
 
   if (loading) {
     return (
       <div className="min-vh-100 bg-dark text-white">
         <Navbar />
 
-        <main
-          className="
-            min-vh-100
-            d-flex
-            justify-content-center
-            align-items-center
-          "
-        >
+        <main className="min-vh-100 d-flex justify-content-center align-items-center">
           <div className="text-center">
             <div
               className="spinner-border text-danger mb-3"
@@ -94,9 +134,7 @@ function ContentDetail() {
               </span>
             </div>
 
-            <p className="mb-0">
-              Cargando contenido...
-            </p>
+            <p>Cargando contenido...</p>
           </div>
         </main>
 
@@ -105,21 +143,12 @@ function ContentDetail() {
     )
   }
 
-
   if (error) {
     return (
       <div className="min-vh-100 bg-dark text-white">
         <Navbar />
 
-        <main
-          className="
-            container
-            min-vh-100
-            d-flex
-            justify-content-center
-            align-items-center
-          "
-        >
+        <main className="container min-vh-100 d-flex justify-content-center align-items-center">
           <div className="text-center">
             <h2 className="mb-3">
               No pudimos cargar el contenido
@@ -144,27 +173,17 @@ function ContentDetail() {
     )
   }
 
-
   if (!content) {
     return null
   }
-
-
-  const heroImage =
-    content.hero_url ||
-    content.portada_url
-
-  const hasVideo = Boolean(
-    content.video_hls_url ||
-    content.video_url
-  )
-
 
   return (
     <div className="min-vh-100 bg-dark text-white">
       <Navbar />
 
       <main>
+        {/* HERO */}
+
         <section
           className="position-relative"
           style={{
@@ -192,134 +211,217 @@ function ContentDetail() {
           }}
         >
           <div
-            className="
-              container
-              d-flex
-              align-items-center
-            "
+            className="container d-flex align-items-center"
             style={{
               minHeight: '75vh',
               paddingTop: '100px',
               paddingBottom: '80px'
             }}
           >
-            <div
-              style={{
-                maxWidth: '700px'
-              }}
-            >
+            <div style={{ maxWidth: '700px' }}>
               <button
                 type="button"
-                className="
-                  btn
-                  btn-outline-light
-                  btn-sm
-                  mb-4
-                "
+                className="btn btn-outline-light btn-sm mb-4"
                 onClick={handleBack}
               >
                 ← Volver
               </button>
 
-              <p
-                className="
-                  text-danger
-                  fw-bold
-                  text-uppercase
-                  mb-2
-                "
-              >
+              <p className="text-danger fw-bold text-uppercase mb-2">
                 {content.tipo || 'Contenido'}
               </p>
 
-              <h1
-                className="
-                  display-3
-                  fw-bold
-                  mb-3
-                "
-              >
+              <h1 className="display-3 fw-bold mb-3">
                 {content.titulo}
               </h1>
 
-              <div
-                className="
-                  d-flex
-                  flex-wrap
-                  gap-3
-                  text-light
-                  mb-4
-                "
-              >
+              <div className="d-flex flex-wrap gap-3 text-light mb-4">
                 {content.anio && (
-                  <span>
-                    {content.anio}
-                  </span>
+                  <span>{content.anio}</span>
                 )}
 
                 {content.genero && (
-                  <span>
-                    {content.genero}
-                  </span>
+                  <span>{content.genero}</span>
                 )}
 
-                {content.duracion_min && (
+                {isSeries ? (
                   <span>
-                    {content.duracion_min} min
+                    {seasons.length}{' '}
+                    {seasons.length === 1
+                      ? 'temporada'
+                      : 'temporadas'}
                   </span>
+                ) : (
+                  content.duracion_min && (
+                    <span>
+                      {content.duracion_min} min
+                    </span>
+                  )
                 )}
               </div>
 
-              {content.descripcion ? (
-                <p
-                  className="
-                    fs-5
-                    text-light
-                    mb-4
-                  "
-                  style={{
-                    lineHeight: '1.7'
-                  }}
+              <p
+                className="fs-5 text-light mb-4"
+                style={{ lineHeight: '1.7' }}
+              >
+                {content.descripcion ||
+                  'Este contenido todavía no tiene una descripción disponible.'}
+              </p>
+
+              {!isSeries && (
+                <button
+                  type="button"
+                  className={
+                    hasMovieVideo
+                      ? 'btn btn-danger btn-lg px-4'
+                      : 'btn btn-secondary btn-lg px-4'
+                  }
+                  onClick={handlePlay}
+                  disabled={!hasMovieVideo}
                 >
-                  {content.descripcion}
-                </p>
-              ) : (
-                <p className="text-secondary mb-4">
-                  Este contenido todavía no tiene
-                  una descripción disponible.
-                </p>
+                  {hasMovieVideo
+                    ? '▶ Reproducir'
+                    : 'Video no disponible'}
+                </button>
               )}
 
-              {hasVideo ? (
-                <button
-                  type="button"
-                  className="
-                    btn
-                    btn-danger
-                    btn-lg
-                    px-4
-                  "
-                  onClick={handlePlay}
+              {isSeries && (
+                <a
+                  href="#episodes"
+                  className="btn btn-danger btn-lg px-4"
                 >
-                  ▶ Reproducir
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="
-                    btn
-                    btn-secondary
-                    btn-lg
-                    px-4
-                  "
-                  disabled
-                >
-                  Video no disponible
-                </button>
+                  Ver episodios
+                </a>
               )}
             </div>
           </div>
         </section>
+
+        {/* EPISODIOS */}
+
+        {isSeries && (
+          <section
+            id="episodes"
+            className="container py-5"
+          >
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+              <h2 className="fw-bold mb-0">
+                Episodios
+              </h2>
+
+              {seasons.length > 0 && (
+                <select
+                  className="form-select bg-dark text-white border-secondary"
+                  style={{ width: 'auto' }}
+                  value={selectedSeason}
+                  onChange={(event) =>
+                    setSelectedSeason(
+                      Number(event.target.value)
+                    )
+                  }
+                  aria-label="Seleccionar temporada"
+                >
+                  {seasons.map((season) => (
+                    <option
+                      key={season}
+                      value={season}
+                    >
+                      Temporada {season}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {!hasEpisodes ? (
+              <p className="text-secondary">
+                Esta serie todavía no tiene
+                episodios disponibles.
+              </p>
+            ) : (
+              <div className="row g-3">
+                {filteredEpisodes.map((episode) => {
+                  const hasEpisodeVideo = Boolean(
+                    episode.video_b2_key ||
+                    episode.video_hls_url
+                  )
+
+                  return (
+                    <div
+                      key={episode.id}
+                      className="col-12"
+                    >
+                      <div
+                        className="rounded border border-secondary p-3 p-md-4"
+                        style={{
+                          backgroundColor: '#1c1c1c'
+                        }}
+                      >
+                        <div className="d-flex flex-column flex-md-row align-items-md-center gap-3">
+                          <div
+                            className="rounded d-flex align-items-center justify-content-center flex-shrink-0"
+                            style={{
+                              width: '160px',
+                              height: '90px',
+                              backgroundImage: content.portada_url
+                                ? `linear-gradient(rgba(0,0,0,.25), rgba(0,0,0,.55)), url("${content.portada_url}")`
+                                : 'none',
+                              backgroundColor: '#343a40',
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center'
+                            }}
+                          >
+                            <span
+                              className="fs-2 text-white"
+                              aria-hidden="true"
+                            >
+                              ▶
+                            </span>
+                          </div>
+
+                          <div className="flex-grow-1">
+                            <h3 className="h5 fw-bold mb-2">
+                              {episode.numero}.{' '}
+                              {episode.titulo}
+                            </h3>
+
+                            <p className="text-secondary small mb-2">
+                              {episode.duracion_min} min
+                            </p>
+
+                            <p className="text-light mb-0">
+                              {episode.descripcion ||
+                                'Sin descripción disponible.'}
+                            </p>
+                          </div>
+
+                          <div className="flex-shrink-0">
+                            <button
+                              type="button"
+                              className="btn btn-danger"
+                              disabled={!hasEpisodeVideo}
+                              onClick={() =>
+                                navigate(
+                                  `/watch/${content.id}/episode/${episode.id}`
+                                )
+                              }
+                            >
+                              {hasEpisodeVideo
+                                ? '▶ Reproducir'
+                                : 'No disponible'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* INFORMACIÓN */}
 
         <section className="container py-5">
           <div className="row g-4">
@@ -328,11 +430,7 @@ function ContentDetail() {
                 <img
                   src={content.portada_url}
                   alt={`Portada de ${content.titulo}`}
-                  className="
-                    img-fluid
-                    rounded
-                    shadow
-                  "
+                  className="img-fluid rounded shadow"
                   style={{
                     width: '100%',
                     maxHeight: '450px',
@@ -357,60 +455,55 @@ function ContentDetail() {
                 <span className="text-secondary">
                   Título:
                 </span>{' '}
-
-                <strong>
-                  {content.titulo}
-                </strong>
+                <strong>{content.titulo}</strong>
               </div>
 
               <div className="mb-3">
                 <span className="text-secondary">
                   Tipo:
                 </span>{' '}
-
-                <strong>
-                  {content.tipo || 'No especificado'}
-                </strong>
+                <strong>{content.tipo}</strong>
               </div>
 
               <div className="mb-3">
                 <span className="text-secondary">
                   Género:
                 </span>{' '}
-
-                <strong>
-                  {content.genero || 'No especificado'}
-                </strong>
+                <strong>{content.genero}</strong>
               </div>
 
               <div className="mb-3">
                 <span className="text-secondary">
                   Año:
                 </span>{' '}
-
-                <strong>
-                  {content.anio || 'No especificado'}
-                </strong>
+                <strong>{content.anio}</strong>
               </div>
 
-              <div className="mb-3">
-                <span className="text-secondary">
-                  Duración:
-                </span>{' '}
+              {!isSeries && (
+                <div className="mb-3">
+                  <span className="text-secondary">
+                    Duración:
+                  </span>{' '}
+                  <strong>
+                    {content.duracion_min} minutos
+                  </strong>
+                </div>
+              )}
 
-                <strong>
-                  {content.duracion_min
-                    ? `${content.duracion_min} minutos`
-                    : 'No especificada'}
-                </strong>
-              </div>
+              {isSeries && (
+                <div className="mb-3">
+                  <span className="text-secondary">
+                    Episodios:
+                  </span>{' '}
+                  <strong>{episodes.length}</strong>
+                </div>
+              )}
 
               {content.creador?.username && (
                 <div className="mb-3">
                   <span className="text-secondary">
                     Publicado por:
                   </span>{' '}
-
                   <strong>
                     {content.creador.username}
                   </strong>
@@ -424,9 +517,7 @@ function ContentDetail() {
 
                 <p
                   className="text-light mb-0"
-                  style={{
-                    lineHeight: '1.7'
-                  }}
+                  style={{ lineHeight: '1.7' }}
                 >
                   {content.descripcion ||
                     'Sin descripción disponible.'}

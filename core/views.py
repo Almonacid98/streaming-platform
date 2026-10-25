@@ -10,7 +10,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 
-from .models import Contenido, Visualizacion
+from .models import Contenido, Episodio, Visualizacion
 
 from .serializers import (
     ContenidoSerializer,
@@ -424,7 +424,8 @@ class VisualizacionViewSet(
             .select_related(
                 'usuario',
                 'contenido',
-                'contenido__creador'
+                'contenido__creador',
+                'episodio'
             )
             .order_by(
                 '-fecha_visualizacion'
@@ -437,109 +438,93 @@ class VisualizacionViewSet(
     # ======================================
 
     def create(self, request, *args, **kwargs):
+        contenido_id = request.data.get('contenido')
+        episodio_id = request.data.get('episodio')
+        progreso_segundos = request.data.get('progreso_segundos', 0)
 
-        contenido_id = request.data.get(
-            'contenido'
-        )
-
-        progreso_segundos = request.data.get(
-            'progreso_segundos',
-            0
-        )
-
-        # ----------------------------------
-        # CONTENIDO OBLIGATORIO
-        # ----------------------------------
-
-        if not contenido_id:
-
+        if contenido_id in (None, ''):
             return Response(
-                {
-                    'error':
-                        'Debe indicar el contenido.'
-                },
+                {'error': 'Debe indicar el contenido.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ----------------------------------
-        # COMPROBAR CONTENIDO
-        # ----------------------------------
-
         try:
-
-            contenido = Contenido.objects.get(
-                pk=contenido_id
+            contenido_id = int(contenido_id)
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'El identificador del contenido no es válido.'},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
+        try:
+            contenido = Contenido.objects.get(pk=contenido_id)
         except Contenido.DoesNotExist:
-
             return Response(
-                {
-                    'error':
-                        'El contenido no existe.'
-                },
+                {'error': 'El contenido no existe.'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # ----------------------------------
-        # VALIDAR PROGRESO
-        # ----------------------------------
+        episodio = None
+        if episodio_id not in (None, ''):
+            try:
+                episodio_id = int(episodio_id)
+            except (TypeError, ValueError):
+                return Response(
+                    {'error': 'El identificador del episodio no es válido.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                episodio = Episodio.objects.get(pk=episodio_id)
+            except Episodio.DoesNotExist:
+                return Response(
+                    {'error': 'El episodio no existe.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            if episodio.serie_id != contenido.id:
+                return Response(
+                    {'error': 'El episodio no pertenece al contenido indicado.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
         try:
-
-            progreso_segundos = int(
-                progreso_segundos
-            )
-
+            progreso_segundos = int(progreso_segundos)
         except (TypeError, ValueError):
-
             return Response(
-                {
-                    'error':
-                        'El progreso debe ser un número entero.'
-                },
+                {'error': 'El progreso debe ser un número entero.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         if progreso_segundos < 0:
-
             return Response(
-                {
-                    'error':
-                        'El progreso no puede ser negativo.'
-                },
+                {'error': 'El progreso no puede ser negativo.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ----------------------------------
-        # CREAR O ACTUALIZAR
-        # ----------------------------------
+        # Para películas, episodio=None. Para series, cada episodio
+        # tiene un registro propio sin sobrescribir otros capítulos.
+        lookup = {
+            'usuario': request.user,
+        }
+        if episodio is None:
+            lookup.update(contenido=contenido, episodio=None)
+        else:
+            lookup.update(episodio=episodio)
 
-        visualizacion, creada = (
-            Visualizacion.objects.update_or_create(
-
-                usuario=request.user,
-
-                contenido=contenido,
-
-                defaults={
-                    'progreso_segundos':
-                        progreso_segundos
-                }
-            )
+        visualizacion, creada = Visualizacion.objects.update_or_create(
+            **lookup,
+            defaults={
+                'contenido': contenido,
+                'progreso_segundos': progreso_segundos,
+            }
         )
 
-        serializer = self.get_serializer(
-            visualizacion
-        )
-
-        codigo_estado = (
-            status.HTTP_201_CREATED
-            if creada
-            else status.HTTP_200_OK
-        )
-
+        serializer = self.get_serializer(visualizacion)
         return Response(
             serializer.data,
-            status=codigo_estado
+            status=(
+                status.HTTP_201_CREATED if creada
+                else status.HTTP_200_OK
+            )
         )

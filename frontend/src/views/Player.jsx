@@ -16,7 +16,8 @@ import { useAuth } from '../context/AuthContext'
 
 function Player() {
 
-  const { id } = useParams()
+  const { id, episodeId } = useParams()
+  const isEpisode = Boolean(episodeId)
   const navigate = useNavigate()
 
   const { authFetch } = useAuth()
@@ -25,6 +26,8 @@ function Player() {
 
   const [contenido, setContenido] =
     useState(null)
+
+  const [episode, setEpisode] = useState(null)
 
   // URL temporal firmada generada por Django
   // para reproducir contenido privado desde Backblaze B2.
@@ -65,7 +68,7 @@ function Player() {
 
   const obtenerSubtitulos = () => {
 
-    if (Number(id) !== 5) {
+    if (Number(id) !== 5 || (isEpisode && Number(episodeId) !== 1)) {
       return []
     }
 
@@ -185,6 +188,22 @@ function Player() {
         const dataContenido =
           await responseContenido.json()
 
+        const selectedEpisode = isEpisode
+          ? (dataContenido.episodios || []).find(
+              (item) => Number(item.id) === Number(episodeId)
+            )
+          : null
+
+        if (isEpisode && !selectedEpisode) {
+          throw new Error('El episodio solicitado no existe en esta serie.')
+        }
+
+        if (isEpisode && selectedEpisode.video_b2_key) {
+          throw new Error(
+            'La reproducción de episodios desde B2 requiere habilitar su endpoint en Django.'
+          )
+        }
+
 
         // ======================================
         // BACKBLAZE B2
@@ -201,7 +220,7 @@ function Player() {
 
         let b2Url = null
 
-        if (dataContenido.video_b2_key) {
+        if (!isEpisode && dataContenido.video_b2_key) {
 
           console.log(
             'Contenido disponible en Backblaze B2.'
@@ -239,65 +258,42 @@ function Player() {
         // CARGAR PROGRESO
         // ======================================
 
-        const responseVisualizaciones =
-          await authFetch(
+        let progreso = 0
+
+        {
+          const responseVisualizaciones = await authFetch(
             `${API_URL}/visualizaciones/`
           )
 
+          if (!responseVisualizaciones.ok) {
+            throw new Error('No se pudo recuperar el progreso.')
+          }
 
-        if (!responseVisualizaciones.ok) {
+          const visualizaciones = await responseVisualizaciones.json()
+          const items = Array.isArray(visualizaciones)
+            ? visualizaciones
+            : (visualizaciones.results || [])
 
-          throw new Error(
-            'No se pudo recuperar el progreso.'
+          const visualizacion = items.find(
+            (item) =>
+              Number(item.contenido) === Number(id) &&
+              (isEpisode
+                ? Number(item.episodio) === Number(episodeId)
+                : item.episodio == null)
           )
+
+          progreso = visualizacion
+            ? Number(visualizacion.progreso_segundos) || 0
+            : 0
         }
 
-
-        const visualizaciones =
-          await responseVisualizaciones.json()
-
-
-        const visualizacion =
-          visualizaciones.find(
-            (item) =>
-              Number(item.contenido) ===
-              Number(id)
-          )
-
-
-        const progreso =
-          visualizacion
-            ? Number(
-                visualizacion.progreso_segundos
-              )
-            : 0
-
-
         if (activo) {
-
-          setContenido(
-            dataContenido
-          )
-
-          setVideoB2Url(
-            b2Url
-          )
-
-          setProgresoGuardado(
-            progreso || 0
-          )
-
-
-          if (progreso > 0) {
-
-            setMostrarReanudacion(true)
-            setDecisionTomada(false)
-
-          } else {
-
-            setMostrarReanudacion(false)
-            setDecisionTomada(true)
-          }
+          setContenido(dataContenido)
+          setEpisode(selectedEpisode)
+          setVideoB2Url(b2Url)
+          setProgresoGuardado(progreso)
+          setMostrarReanudacion(progreso > 0)
+          setDecisionTomada(progreso === 0)
         }
 
       } catch (error) {
@@ -332,7 +328,7 @@ function Player() {
       activo = false
     }
 
-  }, [API_URL, id, authFetch])
+  }, [API_URL, id, episodeId, isEpisode, authFetch])
 
 
   // ==========================================
@@ -354,10 +350,10 @@ function Player() {
       videoB2Url
 
     const hlsUrl =
-      contenido.video_hls_url
+      isEpisode ? episode?.video_hls_url : contenido.video_hls_url
 
     const videoUrl =
-      contenido.video_url
+      isEpisode ? null : contenido.video_url
 
 
     // ========================================
@@ -511,7 +507,7 @@ function Player() {
       'El contenido no tiene video disponible.'
     )
 
-  }, [contenido, videoB2Url])
+  }, [contenido, episode, isEpisode, videoB2Url])
 
 
   // ==========================================
@@ -568,6 +564,7 @@ function Player() {
 
             body: JSON.stringify({
               contenido: Number(id),
+              episodio: isEpisode ? Number(episodeId) : null,
               progreso_segundos: segundos
             })
           }
@@ -732,7 +729,9 @@ function Player() {
   }, [
     contenido,
     id,
-    decisionTomada
+    episodeId,
+    decisionTomada,
+    authFetch
   ])
 
 
@@ -774,7 +773,7 @@ function Player() {
       await guardarProgreso()
     }
 
-    navigate('/')
+    navigate(isEpisode ? `/content/${id}` : '/')
   }
 
 
@@ -876,8 +875,8 @@ function Player() {
   const hayVideo =
     Boolean(
       videoB2Url ||
-      contenido.video_hls_url ||
-      contenido.video_url
+      (isEpisode ? episode?.video_hls_url : contenido.video_hls_url) ||
+      (!isEpisode && contenido.video_url)
     )
 
 
@@ -907,6 +906,7 @@ function Player() {
 
         <h1 className="mb-2">
           {contenido.titulo}
+          {episode ? ` — T${episode.temporada} E${episode.numero}: ${episode.titulo}` : ''}
         </h1>
 
 
@@ -920,7 +920,7 @@ function Player() {
 
           {' • '}
 
-          {contenido.duracion_min} min
+          {episode ? episode.duracion_min : contenido.duracion_min} min
 
         </p>
 
@@ -1146,7 +1146,7 @@ function Player() {
                 "
 
                 onClick={() =>
-                  navigate('/')
+                  navigate(isEpisode ? `/content/${id}` : '/')
                 }
               >
                 Volver al inicio

@@ -89,6 +89,17 @@ class VisualizacionSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    episodio_detalle = EpisodioSerializer(
+        source='episodio',
+        read_only=True
+    )
+
+    episodio = serializers.PrimaryKeyRelatedField(
+        queryset=Episodio.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
     class Meta:
         model = Visualizacion
 
@@ -97,6 +108,8 @@ class VisualizacionSerializer(serializers.ModelSerializer):
             'usuario',
             'contenido',
             'contenido_detalle',
+            'episodio',
+            'episodio_detalle',
             'progreso_segundos',
             'fecha_visualizacion',
         ]
@@ -105,6 +118,7 @@ class VisualizacionSerializer(serializers.ModelSerializer):
             'id',
             'usuario',
             'contenido_detalle',
+            'episodio_detalle',
             'fecha_visualizacion',
         ]
 
@@ -116,3 +130,37 @@ class VisualizacionSerializer(serializers.ModelSerializer):
             )
 
         return value
+
+    def validate(self, attrs):
+
+        attrs = super().validate(attrs)
+
+        contenido = attrs.get(
+            'contenido',
+            getattr(self.instance, 'contenido', None)
+        )
+
+        episodio = attrs.get(
+            'episodio',
+            getattr(self.instance, 'episodio', None)
+        )
+
+        if episodio is not None:
+
+            if contenido is None:
+                raise serializers.ValidationError({
+                    'contenido': (
+                        'Debe indicar el contenido al que '
+                        'pertenece el episodio.'
+                    )
+                })
+
+            if episodio.serie_id != contenido.id:
+                raise serializers.ValidationError({
+                    'episodio': (
+                        'El episodio seleccionado no '
+                        'pertenece al contenido indicado.'
+                    )
+                })
+
+        return attrs

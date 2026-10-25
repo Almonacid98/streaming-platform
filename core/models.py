@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.db.models import Q
 
 
 class Contenido(models.Model):
@@ -8,73 +9,57 @@ class Contenido(models.Model):
         PELICULA = 'pelicula', 'Película'
         SERIE = 'serie', 'Serie'
 
-    titulo = models.CharField(
-        max_length=200
-    )
+    titulo = models.CharField(max_length=200)
 
     tipo = models.CharField(
         max_length=20,
         choices=Tipos.choices
     )
 
-    genero = models.CharField(
-        max_length=100
-    )
+    genero = models.CharField(max_length=100)
 
     anio = models.IntegerField()
 
     duracion_min = models.PositiveIntegerField()
 
-    # Descripción o sinopsis del contenido
     descripcion = models.TextField(
         blank=True,
         default=''
     )
 
-    # Trailer / preview del contenido en Cloudinary
+    # Trailer / preview de Cloudinary
     video_url = models.URLField(
         max_length=1000,
         blank=True,
         null=True
     )
 
-    # ID del trailer almacenado en Cloudinary
     video_public_id = models.CharField(
         max_length=500,
         blank=True,
         null=True
     )
 
-    # URL del contenido completo en formato HLS
-    # Se mantiene como alternativa para desarrollo/local
+    # HLS local
     video_hls_url = models.URLField(
         max_length=1000,
         blank=True,
         null=True
     )
 
-    # Ruta del contenido completo almacenado en Backblaze B2.
-    #
-    # Se utiliza principalmente para películas.
-    #
-    # Ejemplo:
-    # movies/interstellar/interstellar.mp4
-    #
-    # No guarda una URL firmada porque esas URLs expiran.
+    # Ruta del archivo en Backblaze B2
     video_b2_key = models.CharField(
         max_length=500,
         blank=True,
         null=True
     )
 
-    # Imagen vertical utilizada en las tarjetas
     portada_url = models.URLField(
         max_length=1000,
         blank=True,
         null=True
     )
 
-    # Imagen horizontal utilizada en el Hero
     hero_url = models.URLField(
         max_length=1000,
         blank=True,
@@ -120,22 +105,12 @@ class Episodio(models.Model):
 
     duracion_min = models.PositiveIntegerField()
 
-    # Video completo del episodio en Backblaze B2.
-    #
-    # Ejemplo:
-    # series/solo-leveling/season-1/episode-01.mp4
-    #
-    # Se guarda únicamente la key del objeto.
-    # Django generará la URL firmada al reproducirlo.
     video_b2_key = models.CharField(
         max_length=500,
         blank=True,
         null=True
     )
 
-    # HLS local / desarrollo.
-    # Lo mantenemos porque actualmente Solo Leveling
-    # utiliza HLS y no queremos romperlo.
     video_hls_url = models.URLField(
         max_length=1000,
         blank=True,
@@ -161,7 +136,6 @@ class Episodio(models.Model):
         ]
 
     def __str__(self):
-
         return (
             f"{self.serie.titulo} - "
             f"T{self.temporada} "
@@ -169,6 +143,10 @@ class Episodio(models.Model):
             f"{self.titulo}"
         )
 
+
+# ==========================================
+# VISUALIZACIONES
+# ==========================================
 
 class Visualizacion(models.Model):
 
@@ -184,6 +162,16 @@ class Visualizacion(models.Model):
         related_name='visualizaciones'
     )
 
+    # NULL para películas.
+    # Para series identifica el capítulo reproducido.
+    episodio = models.ForeignKey(
+        Episodio,
+        on_delete=models.CASCADE,
+        related_name='visualizaciones',
+        null=True,
+        blank=True
+    )
+
     progreso_segundos = models.PositiveIntegerField(
         default=0
     )
@@ -195,19 +183,39 @@ class Visualizacion(models.Model):
     class Meta:
 
         constraints = [
+
+            # Una visualización por usuario y contenido
+            # cuando no se especifica un episodio.
             models.UniqueConstraint(
                 fields=[
                     'usuario',
                     'contenido'
                 ],
-                name=(
-                    'visualizacion_unica_por_'
-                    'usuario_contenido'
-                )
+                condition=Q(episodio__isnull=True),
+                name='visualizacion_unica_usuario_contenido'
+            ),
+
+            # Una visualización independiente por
+            # usuario y episodio.
+            models.UniqueConstraint(
+                fields=[
+                    'usuario',
+                    'episodio'
+                ],
+                condition=Q(episodio__isnull=False),
+                name='visualizacion_unica_usuario_episodio'
             )
+
         ]
 
     def __str__(self):
+
+        if self.episodio:
+            return (
+                f"{self.usuario} - "
+                f"{self.episodio} - "
+                f"{self.progreso_segundos}s"
+            )
 
         return (
             f"{self.usuario} - "
