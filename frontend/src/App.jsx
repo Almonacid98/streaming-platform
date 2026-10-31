@@ -69,10 +69,22 @@ function App() {
       />
 
 
-      {/* Reproductor */}
+      {/* Reproductor de películas */}
 
       <Route
         path="/watch/:id"
+        element={
+          <ProtectedRoute>
+            <Player />
+          </ProtectedRoute>
+        }
+      />
+
+
+      {/* Reproductor de episodios */}
+
+      <Route
+        path="/watch/:id/episode/:episodeId"
         element={
           <ProtectedRoute>
             <Player />
