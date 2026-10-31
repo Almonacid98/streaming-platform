@@ -1,7 +1,12 @@
+
 from django.db import models
 from django.conf import settings
 from django.db.models import Q
 
+
+# ==========================================
+# CONTENIDOS
+# ==========================================
 
 class Contenido(models.Model):
 
@@ -222,3 +227,45 @@ class Visualizacion(models.Model):
             f"{self.contenido} - "
             f"{self.progreso_segundos}s"
         )
+
+
+# ==========================================
+# FAVORITOS / MI LISTA
+# ==========================================
+
+class Favorito(models.Model):
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='favoritos'
+    )
+
+    contenido = models.ForeignKey(
+        Contenido,
+        on_delete=models.CASCADE,
+        related_name='favoritos'
+    )
+
+    fecha_agregado = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    class Meta:
+
+        ordering = [
+            '-fecha_agregado'
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    'usuario',
+                    'contenido'
+                ],
+                name='favorito_unico_usuario_contenido'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.usuario} - {self.contenido}"

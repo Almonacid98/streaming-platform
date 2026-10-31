@@ -1,6 +1,7 @@
+
 from rest_framework import serializers
 
-from .models import Contenido, Episodio, Visualizacion
+from .models import Contenido, Episodio, Visualizacion, Favorito
 from users.models import User
 
 
@@ -164,3 +165,31 @@ class VisualizacionSerializer(serializers.ModelSerializer):
                 })
 
         return attrs
+
+
+# ==========================================
+# FAVORITOS / MI LISTA
+# ==========================================
+
+class FavoritoSerializer(serializers.ModelSerializer):
+
+    contenido_detalle = ContenidoSerializer(
+        source='contenido',
+        read_only=True
+    )
+
+    class Meta:
+        model = Favorito
+
+        fields = [
+            'id',
+            'contenido',
+            'contenido_detalle',
+            'fecha_agregado',
+        ]
+
+        read_only_fields = [
+            'id',
+            'contenido_detalle',
+            'fecha_agregado',
+        ]
