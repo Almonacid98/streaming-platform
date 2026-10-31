@@ -19,6 +19,8 @@ function Player() {
   const [contenido, setContenido] = useState(null)
   const [episode, setEpisode] = useState(null)
   const [videoB2Url, setVideoB2Url] = useState(null)
+  const [hlsPrivadoUrl, setHlsPrivadoUrl] = useState(null)
+  const [subtitulosB2, setSubtitulosB2] = useState([])
   const [progresoGuardado, setProgresoGuardado] = useState(0)
   const [mostrarReanudacion, setMostrarReanudacion] = useState(false)
   const [decisionTomada, setDecisionTomada] = useState(false)
@@ -29,64 +31,36 @@ function Player() {
   // SUBTÍTULOS
   // ==========================================
 
+  // Los subtítulos de B2 se obtienen desde Django para cualquier episodio.
+  // Se mantiene la configuración local existente del episodio 1.
   const obtenerSubtitulos = () => {
-    if (
-      Number(id) !== 5 ||
-      (isEpisode && Number(episodeId) !== 1)
-    ) {
+    if (isEpisode && episode?.video_b2_key) {
+      return subtitulosB2
+    }
+
+    if (Number(id) !== 5 || !isEpisode || Number(episodeId) !== 1) {
       return []
     }
 
     const baseUrl = 'http://localhost:8081/solo_leveling_ep1'
-
-    return [
-      {
-        src: `${baseUrl}/subtitles_es_latino.vtt`,
-        srcLang: 'es-419',
-        label: 'Español (Latinoamérica)',
-        default: true
-      },
-      {
-        src: `${baseUrl}/subtitles_es.vtt`,
-        srcLang: 'es',
-        label: 'Español'
-      },
-      {
-        src: `${baseUrl}/subtitles_en.vtt`,
-        srcLang: 'en',
-        label: 'English'
-      },
-      {
-        src: `${baseUrl}/subtitles_pt_br.vtt`,
-        srcLang: 'pt-BR',
-        label: 'Português (Brasil)'
-      },
-      {
-        src: `${baseUrl}/subtitles_fr.vtt`,
-        srcLang: 'fr',
-        label: 'Français'
-      },
-      {
-        src: `${baseUrl}/subtitles_de.vtt`,
-        srcLang: 'de',
-        label: 'Deutsch'
-      },
-      {
-        src: `${baseUrl}/subtitles_it.vtt`,
-        srcLang: 'it',
-        label: 'Italiano'
-      },
-      {
-        src: `${baseUrl}/subtitles_ru.vtt`,
-        srcLang: 'ru',
-        label: 'Русский'
-      },
-      {
-        src: `${baseUrl}/subtitles_ar.vtt`,
-        srcLang: 'ar',
-        label: 'العربية'
-      }
+    const idiomas = [
+      ['es_latino', 'es-419', 'Español (Latinoamérica)'],
+      ['es', 'es', 'Español'],
+      ['en', 'en', 'English'],
+      ['pt_br', 'pt-BR', 'Português (Brasil)'],
+      ['fr', 'fr', 'Français'],
+      ['de', 'de', 'Deutsch'],
+      ['it', 'it', 'Italiano'],
+      ['ru', 'ru', 'Русский'],
+      ['ar', 'ar', 'العربية']
     ]
+
+    return idiomas.map(([archivo, srcLang, label], index) => ({
+      src: `${baseUrl}/subtitles_${archivo}.vtt`,
+      srcLang,
+      label,
+      default: index === 0
+    }))
   }
 
   const subtitulos = obtenerSubtitulos()
@@ -111,12 +85,15 @@ function Player() {
 
   useEffect(() => {
     let activo = true
+    let blobCreado = null
 
     const cargarDatos = async () => {
       try {
         setLoading(true)
         setError('')
         setVideoB2Url(null)
+        setHlsPrivadoUrl(null)
+        setSubtitulosB2([])
 
         const responseContenido = await fetch(
           `${API_URL}/contenidos/${id}/`
@@ -140,13 +117,39 @@ function Player() {
           )
         }
 
-        // Los episodios HLS siguen usando video_hls_url.
-        // El endpoint privado de episodios B2 todavía no
-        // está implementado en el backend actual.
+        // Si el episodio está en B2, Django devuelve el manifiesto
+        // con las URLs de los segmentos ya firmadas.
+        let nuevoManifiesto = null
+        let nuevosSubtitulos = []
+
         if (isEpisode && selectedEpisode.video_b2_key) {
-          throw new Error(
-            'La reproducción de episodios desde B2 requiere habilitar su endpoint en Django.'
+          const respuestaHls = await authFetch(
+            `${API_URL}/episodios/${episodeId}/play/`
           )
+
+          if (!respuestaHls.ok) {
+            throw new Error('No se pudo autorizar la reproducción HLS.')
+          }
+
+          const textoHls = await respuestaHls.text()
+          if (!textoHls.trimStart().startsWith('#EXTM3U')) {
+            throw new Error('Django no devolvió un manifiesto HLS válido.')
+          }
+
+          nuevoManifiesto = URL.createObjectURL(
+            new Blob([textoHls], { type: 'application/vnd.apple.mpegurl' })
+          )
+          blobCreado = nuevoManifiesto
+
+          const respuestaSubtitulos = await authFetch(
+            `${API_URL}/episodios/${episodeId}/subtitulos/`
+          )
+          if (!respuestaSubtitulos.ok) {
+            URL.revokeObjectURL(nuevoManifiesto)
+            blobCreado = null
+            throw new Error('No se pudieron obtener los subtítulos del episodio.')
+          }
+          nuevosSubtitulos = await respuestaSubtitulos.json()
         }
 
         // ======================================
@@ -207,6 +210,8 @@ function Player() {
           setContenido(dataContenido)
           setEpisode(selectedEpisode)
           setVideoB2Url(b2Url)
+          setHlsPrivadoUrl(nuevoManifiesto)
+          setSubtitulosB2(nuevosSubtitulos)
           setProgresoGuardado(progreso)
           setMostrarReanudacion(progreso > 0)
           setDecisionTomada(progreso === 0)
@@ -230,6 +235,7 @@ function Player() {
 
     return () => {
       activo = false
+      if (blobCreado) URL.revokeObjectURL(blobCreado)
     }
   }, [API_URL, id, episodeId, isEpisode, authFetch])
 
@@ -245,7 +251,7 @@ function Player() {
     }
 
     const hlsUrl = isEpisode
-      ? episode?.video_hls_url
+      ? (episode?.video_b2_key ? hlsPrivadoUrl : episode?.video_hls_url)
       : contenido.video_hls_url
 
     const videoUrl = isEpisode
@@ -321,7 +327,7 @@ function Player() {
     }
 
     console.warn('El contenido no tiene video disponible.')
-  }, [contenido, episode, isEpisode, videoB2Url])
+  }, [contenido, episode, isEpisode, videoB2Url, hlsPrivadoUrl])
 
   // ==========================================
   // GUARDAR PROGRESO
@@ -535,6 +541,7 @@ function Player() {
 
   const hayVideo = Boolean(
     videoB2Url ||
+    hlsPrivadoUrl ||
     (
       isEpisode
         ? episode?.video_hls_url

@@ -22,7 +22,14 @@ from .permissions import (
     IsOwnerOrAdmin,
     IsAuthenticatedClient
 )
-
+from django.http import HttpResponse
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import NotFound
+from .services.hls import (
+    generar_manifiesto_hls,
+    generar_url_firmada,
+    obtener_cliente_b2,
+)
 
 # ==========================================
 # CONTENIDOS
@@ -528,3 +535,94 @@ class VisualizacionViewSet(
                 else status.HTTP_200_OK
             )
         )
+class EpisodioViewSet(viewsets.GenericViewSet):
+
+        queryset = Episodio.objects.select_related("serie").all()
+        permission_classes = [IsAuthenticated]
+
+        @action(
+            detail=True,
+            methods=["get"],
+            url_path="play",
+        )
+        def play(self, request, pk=None):
+            episodio = self.get_object()
+
+            if not episodio.video_b2_key:
+                raise NotFound(
+                    "Este episodio no tiene un video en Backblaze B2."
+                )
+
+            try:
+                manifiesto = generar_manifiesto_hls(
+                    episodio.video_b2_key
+                )
+
+                response = HttpResponse(
+                    manifiesto,
+                    content_type="application/vnd.apple.mpegurl",
+                )
+
+                response["Cache-Control"] = "private, no-store"
+
+                return response
+
+            except Exception:
+                return Response(
+                    {
+                        "error": (
+                            "No se pudo preparar la reproducción HLS."
+                        )
+                    },
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+
+        @action(
+            detail=True,
+            methods=["get"],
+            url_path="subtitulos",
+        )
+        def subtitulos(self, request, pk=None):
+            episodio = self.get_object()
+
+            if not episodio.video_b2_key:
+                raise NotFound(
+                    "Este episodio no tiene archivos en B2."
+                )
+
+            carpeta = str(
+                __import__("pathlib").PurePosixPath(
+                    episodio.video_b2_key
+                ).parent
+            )
+
+            idiomas = [
+                ("es-419", "Español (Latinoamérica)", "es_latino"),
+                ("es", "Español", "es"),
+                ("en", "English", "en"),
+                ("pt-BR", "Português (Brasil)", "pt_br"),
+                ("fr", "Français", "fr"),
+                ("de", "Deutsch", "de"),
+                ("it", "Italiano", "it"),
+                ("ru", "Русский", "ru"),
+                ("ar", "العربية", "ar"),
+            ]
+
+            s3 = obtener_cliente_b2()
+
+            resultado = []
+
+            for codigo, nombre, archivo in idiomas:
+                key = (
+                    f"{carpeta}/subtitles/"
+                    f"subtitles_{archivo}.vtt"
+                )
+
+                resultado.append({
+                    "src": generar_url_firmada(s3, key),
+                    "srcLang": codigo,
+                    "label": nombre,
+                    "default": codigo == "es-419",
+                })
+
+            return Response(resultado)
