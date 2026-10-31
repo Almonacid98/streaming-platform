@@ -1,3 +1,4 @@
+
 from rest_framework import serializers
 
 from .models import User
@@ -11,7 +12,27 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = '__all__'
+        fields = (
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'email',
+            'edad',
+            'genero',
+            'rol',
+            'is_active',
+            'is_staff',
+            'is_superuser',
+            'fecha_creacion',
+        )
+
+        read_only_fields = (
+            'id',
+            'is_staff',
+            'is_superuser',
+            'fecha_creacion',
+        )
 
 
 # ==========================================
@@ -38,6 +59,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             'genero',
         )
 
+        read_only_fields = ('id',)
 
     def create(self, validated_data):
 
@@ -82,7 +104,13 @@ class ProfileSerializer(serializers.ModelSerializer):
             'fecha_creacion',
         )
 
-        read_only_fields = fields
+        # El usuario puede editar sus datos
+        # personales, pero no su rol ni su ID.
+        read_only_fields = (
+            'id',
+            'rol',
+            'fecha_creacion',
+        )
 
 
 # ==========================================

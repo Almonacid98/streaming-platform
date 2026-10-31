@@ -1,3 +1,4 @@
+
 import {
   createContext,
   useContext,
@@ -14,12 +15,9 @@ const API_URL = import.meta.env.VITE_API_URL
 // ==========================================
 // REFRESH COMPARTIDO
 // ==========================================
-//
-// Se mantiene fuera del componente para que,
-// incluso con React StrictMode, dos montajes
-// simultáneos compartan la misma renovación.
-//
 
+// Permite compartir una misma renovación
+// de token entre varias peticiones.
 let refreshPromise = null
 
 
@@ -50,27 +48,33 @@ export function AuthProvider({ children }) {
 
 
   // ==========================================
+  // ACTUALIZAR USUARIO
+  // ==========================================
+
+  // NUEVO: permite actualizar los datos
+  // del usuario después de editar su perfil.
+
+  const actualizarUsuario = (datos) => {
+    setUsuario(datos)
+  }
+
+
+  // ==========================================
   // RENOVAR ACCESS TOKEN
   // POST /api/token/refresh/
   // ==========================================
 
   const renovarAccessToken = async () => {
 
-    // Si ya existe una renovación en curso,
-    // reutilizamos esa misma promesa.
     if (refreshPromise) {
       return refreshPromise
     }
 
-
-    const refresh =
-      localStorage.getItem('refresh')
-
+    const refresh = localStorage.getItem('refresh')
 
     if (!refresh) {
       return null
     }
-
 
     refreshPromise = (async () => {
 
@@ -91,36 +95,26 @@ export function AuthProvider({ children }) {
           }
         )
 
-
-        // Refresh vencido, inválido o revocado
         if (!response.ok) {
-
           limpiarTokens()
-
           return null
         }
 
-
         const data = await response.json()
 
-
-        // Guardar nuevo access
         localStorage.setItem(
           'access',
           data.access
         )
 
-
-        // SimpleJWT puede rotar el refresh.
-        // Si devuelve uno nuevo, lo reemplazamos.
+        // Si SimpleJWT rota el refresh,
+        // guardamos el nuevo token.
         if (data.refresh) {
-
           localStorage.setItem(
             'refresh',
             data.refresh
           )
         }
-
 
         return data.access
 
@@ -135,13 +129,11 @@ export function AuthProvider({ children }) {
 
       } finally {
 
-        // Permitimos futuras renovaciones
-        // una vez terminada la actual.
         refreshPromise = null
+
       }
 
     })()
-
 
     return refreshPromise
   }
@@ -162,47 +154,37 @@ export function AuthProvider({ children }) {
           method: 'GET',
 
           headers: {
-            'Authorization':
-              `Bearer ${access}`
+            'Authorization': `Bearer ${access}`
           }
         }
       )
 
-
-      // ======================================
-      // ACCESS VENCIDO O INVÁLIDO
-      // ======================================
-
+      // Si el access expiró,
+      // intentamos renovarlo.
       if (response.status === 401) {
 
         const nuevoAccess =
           await renovarAccessToken()
 
-
         if (!nuevoAccess) {
           return null
         }
 
-
-        // Reintentar con el nuevo access
         response = await fetch(
           `${API_URL}/users/profile/`,
           {
             method: 'GET',
 
             headers: {
-              'Authorization':
-                `Bearer ${nuevoAccess}`
+              'Authorization': `Bearer ${nuevoAccess}`
             }
           }
         )
       }
 
-
       if (!response.ok) {
         return null
       }
-
 
       return await response.json()
 
@@ -221,31 +203,19 @@ export function AuthProvider({ children }) {
   // ==========================================
   // FETCH AUTENTICADO
   // ==========================================
-  //
-  // Se utilizará para realizar peticiones
-  // protegidas desde cualquier componente.
-  //
-  // Si el access token está vencido:
-  //
-  // 1. Intenta renovar el access.
-  // 2. Guarda el nuevo token.
-  // 3. Repite automáticamente la petición.
-  //
-  // ==========================================
+
+  // Agrega automáticamente el JWT.
+  // Si expiró, lo renueva y repite
+  // la petición original.
 
   const authFetch = async (url, options = {}) => {
 
-    let access =
-      localStorage.getItem('access')
+    let access = localStorage.getItem('access')
 
-
-    // Si no tenemos access pero sí puede existir
-    // un refresh, intentamos renovarlo.
+    // Intentar renovar si no hay access.
     if (!access) {
 
-      access =
-        await renovarAccessToken()
-
+      access = await renovarAccessToken()
 
       if (!access) {
 
@@ -257,36 +227,28 @@ export function AuthProvider({ children }) {
       }
     }
 
-
-    // Construye las opciones manteniendo cualquier
-    // header enviado por el componente.
+    // Mantener las opciones y cabeceras
+    // enviadas por cada componente.
     const crearOpciones = (token) => ({
       ...options,
 
       headers: {
         ...options.headers,
 
-        'Authorization':
-          `Bearer ${token}`
+        'Authorization': `Bearer ${token}`
       }
     })
-
 
     let response = await fetch(
       url,
       crearOpciones(access)
     )
 
-
-    // ======================================
-    // ACCESS VENCIDO O INVÁLIDO
-    // ======================================
-
+    // Access vencido o inválido.
     if (response.status === 401) {
 
       const nuevoAccess =
         await renovarAccessToken()
-
 
       if (!nuevoAccess) {
 
@@ -297,15 +259,12 @@ export function AuthProvider({ children }) {
         )
       }
 
-
-      // Repetimos exactamente la misma petición
-      // utilizando el nuevo access token.
+      // Repetir la petición original.
       response = await fetch(
         url,
         crearOpciones(nuevoAccess)
       )
     }
-
 
     return response
   }
@@ -319,7 +278,6 @@ export function AuthProvider({ children }) {
 
     let activo = true
 
-
     const restaurarSesion = async () => {
 
       const access =
@@ -327,7 +285,6 @@ export function AuthProvider({ children }) {
 
       const refresh =
         localStorage.getItem('refresh')
-
 
       if (!access && !refresh) {
 
@@ -338,47 +295,33 @@ export function AuthProvider({ children }) {
         return
       }
 
-
       let profileData = null
 
-
-      // ======================================
-      // TENEMOS ACCESS
-      // ======================================
-
+      // Tenemos access.
       if (access) {
 
         profileData =
           await cargarPerfil(access)
+
       }
 
-
-      // ======================================
-      // SOLO TENEMOS REFRESH
-      // ======================================
-
+      // Solo tenemos refresh.
       else if (refresh) {
 
         const nuevoAccess =
           await renovarAccessToken()
 
-
         if (nuevoAccess) {
 
           profileData =
             await cargarPerfil(nuevoAccess)
+
         }
       }
-
-
-      // ======================================
-      // COMPONENTE SIGUE ACTIVO
-      // ======================================
 
       if (!activo) {
         return
       }
-
 
       if (profileData) {
 
@@ -387,17 +330,14 @@ export function AuthProvider({ children }) {
       } else {
 
         limpiarSesion()
-      }
 
+      }
 
       setLoading(false)
     }
 
-
     restaurarSesion()
 
-
-    // Cleanup utilizado también por StrictMode
     return () => {
       activo = false
     }
@@ -430,15 +370,13 @@ export function AuthProvider({ children }) {
         }
       )
 
-
       if (!response.ok) {
         return false
       }
 
-
       const data = await response.json()
 
-
+      // Guardar tokens JWT.
       localStorage.setItem(
         'access',
         data.access
@@ -449,10 +387,9 @@ export function AuthProvider({ children }) {
         data.refresh
       )
 
-
+      // Obtener los datos del usuario.
       const profileData =
         await cargarPerfil(data.access)
-
 
       if (!profileData) {
 
@@ -460,7 +397,6 @@ export function AuthProvider({ children }) {
 
         return false
       }
-
 
       setUsuario(profileData)
 
@@ -504,15 +440,12 @@ export function AuthProvider({ children }) {
         }
       )
 
-
       const data = await response.json()
-
 
       if (!response.ok) {
 
         let message =
           'No se pudo registrar el usuario.'
-
 
         if (data.username) {
 
@@ -545,15 +478,14 @@ export function AuthProvider({ children }) {
         } else if (data.detail) {
 
           message = data.detail
-        }
 
+        }
 
         return {
           success: false,
           message
         }
       }
-
 
       return {
         success: true,
@@ -566,7 +498,6 @@ export function AuthProvider({ children }) {
         'Error al registrar usuario:',
         error
       )
-
 
       return {
         success: false,
@@ -590,13 +521,12 @@ export function AuthProvider({ children }) {
     let refresh =
       localStorage.getItem('refresh')
 
-
     try {
 
       if (refresh) {
 
-        // Si no tenemos access, intentamos
-        // obtener uno antes del logout.
+        // Si falta access, intentamos
+        // obtener uno antes de cerrar sesión.
         if (!access) {
 
           access =
@@ -605,7 +535,6 @@ export function AuthProvider({ children }) {
           refresh =
             localStorage.getItem('refresh')
         }
-
 
         if (access) {
 
@@ -628,20 +557,15 @@ export function AuthProvider({ children }) {
             }
           )
 
-
-          // ==================================
-          // ACCESS VENCIÓ JUSTO AL SALIR
-          // ==================================
-
+          // Si el access expiró justo
+          // durante el logout.
           if (response.status === 401) {
 
             const nuevoAccess =
               await renovarAccessToken()
 
-
             const nuevoRefresh =
               localStorage.getItem('refresh')
-
 
             if (
               nuevoAccess &&
@@ -680,7 +604,9 @@ export function AuthProvider({ children }) {
 
     } finally {
 
+      // Limpiar siempre la sesión local.
       limpiarSesion()
+
     }
   }
 
@@ -697,7 +623,8 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
-        authFetch
+        authFetch,
+        actualizarUsuario
       }}
     >
       {children}
@@ -712,9 +639,7 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
 
-  const context =
-    useContext(AuthContext)
-
+  const context = useContext(AuthContext)
 
   if (!context) {
 
@@ -722,7 +647,6 @@ export function useAuth() {
       'useAuth debe utilizarse dentro de AuthProvider'
     )
   }
-
 
   return context
 }

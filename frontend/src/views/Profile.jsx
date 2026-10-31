@@ -1,3 +1,4 @@
+
 import {
   useEffect,
   useState
@@ -9,14 +10,33 @@ import { useAuth } from '../context/AuthContext'
 
 const API_URL = import.meta.env.VITE_API_URL
 
+const editableFields = [
+  'username',
+  'first_name',
+  'last_name',
+  'email',
+  'edad',
+  'genero'
+]
 
 function Profile() {
   const navigate = useNavigate()
-  const { authFetch } = useAuth()
+
+  const {
+    authFetch,
+    actualizarUsuario
+  } = useAuth()
 
   const [profile, setProfile] = useState(null)
+  const [form, setForm] = useState({})
+
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [editing, setEditing] = useState(false)
+
   const [error, setError] = useState('')
+  const [formError, setFormError] = useState('')
+  const [success, setSuccess] = useState('')
 
   useEffect(() => {
     let active = true
@@ -32,7 +52,7 @@ function Profile() {
 
         if (!response.ok) {
           throw new Error(
-            `No se pudo cargar el perfil. Estado: ${response.status}`
+            `Error HTTP ${response.status}`
           )
         }
 
@@ -40,11 +60,12 @@ function Profile() {
 
         if (active) {
           setProfile(data)
+          setForm(createForm(data))
         }
-      } catch (error) {
+      } catch (err) {
         console.error(
           'Error al cargar el perfil:',
-          error
+          err
         )
 
         if (active) {
@@ -66,54 +87,166 @@ function Profile() {
     }
   }, [authFetch])
 
+  const createForm = (data) => ({
+    username: data.username || '',
+    first_name: data.first_name || '',
+    last_name: data.last_name || '',
+    email: data.email || '',
+    edad: data.edad ?? '',
+    genero: data.genero || ''
+  })
+
+  const handleChange = (event) => {
+    const { name, value } = event.target
+
+    setForm((previous) => ({
+      ...previous,
+      [name]: value
+    }))
+
+    setFormError('')
+    setSuccess('')
+  }
+
+  const handleEdit = () => {
+    setForm(createForm(profile))
+    setEditing(true)
+    setFormError('')
+    setSuccess('')
+  }
+
+  const handleCancel = () => {
+    setForm(createForm(profile))
+    setEditing(false)
+    setFormError('')
+  }
+
+  const handleSave = async (event) => {
+    event.preventDefault()
+
+    if (saving) return
+
+    setSaving(true)
+    setFormError('')
+    setSuccess('')
+
+    try {
+      const payload = {}
+
+      editableFields.forEach((field) => {
+        payload[field] = form[field]
+      })
+
+      payload.edad =
+        form.edad === ''
+          ? null
+          : Number(form.edad)
+
+      if (
+        payload.edad !== null &&
+        (
+          !Number.isInteger(payload.edad) ||
+          payload.edad < 0
+        )
+      ) {
+        setFormError(
+          'Ingresá una edad válida.'
+        )
+        return
+      }
+
+      const response = await authFetch(
+        `${API_URL}/users/profile/`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        const firstError = Object.values(data)[0]
+
+        const message = Array.isArray(firstError)
+          ? firstError[0]
+          : typeof firstError === 'string'
+            ? firstError
+            : 'No se pudieron guardar los cambios.'
+
+        throw new Error(message)
+      }
+
+      setProfile(data)
+      setForm(createForm(data))
+
+      // Mantener sincronizado AuthContext
+      actualizarUsuario(data)
+
+      setEditing(false)
+      setSuccess(
+        'Tu perfil se actualizó correctamente.'
+      )
+
+    } catch (err) {
+      console.error(
+        'Error al actualizar el perfil:',
+        err
+      )
+
+      setFormError(
+        err.message ||
+        'No pudimos actualizar tu perfil.'
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const formatDate = (date) => {
-    if (!date) {
+    if (!date) return 'No disponible'
+
+    const parsed = new Date(date)
+
+    if (Number.isNaN(parsed.getTime())) {
       return 'No disponible'
     }
 
-    return new Intl.DateTimeFormat(
-      'es-AR',
-      {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-      }
-    ).format(new Date(date))
+    return new Intl.DateTimeFormat('es-AR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    }).format(parsed)
   }
 
   const formatGender = (gender) => {
-    if (!gender) {
-      return 'No especificado'
-    }
-
     const genders = {
-      M: 'Masculino',
-      F: 'Femenino',
-      O: 'Otro'
+      masculino: 'Masculino',
+      femenino: 'Femenino',
+      otro: 'Otro',
+      no_decir: 'Prefiero no decir'
     }
 
-    return genders[gender] || gender
+    return genders[gender] || 'No especificado'
   }
 
   const formatRole = (role) => {
-    if (!role) {
-      return 'Usuario'
-    }
-
     const roles = {
-      ADMIN: 'Administrador',
-      USUARIO: 'Usuario',
-      CREADOR: 'Creador'
+      admin: 'Administrador',
+      usuario: 'Usuario',
+      creador: 'Creador'
     }
 
-    return roles[role] || role
+    return roles[role] || 'Usuario'
   }
 
   if (loading) {
     return (
       <main className="min-vh-100 bg-dark text-white d-flex justify-content-center align-items-center">
         <div className="text-center">
-
           <div
             className="spinner-border text-danger mb-3"
             role="status"
@@ -123,10 +256,7 @@ function Profile() {
             </span>
           </div>
 
-          <p>
-            Cargando tu perfil...
-          </p>
-
+          <p>Cargando tu perfil...</p>
         </div>
       </main>
     )
@@ -136,7 +266,6 @@ function Profile() {
     return (
       <main className="min-vh-100 bg-dark text-white d-flex justify-content-center align-items-center">
         <div className="text-center">
-
           <h1 className="h3 mb-3">
             No pudimos cargar tu perfil
           </h1>
@@ -152,26 +281,48 @@ function Profile() {
           >
             ← Volver al inicio
           </button>
-
         </div>
       </main>
     )
   }
 
-  if (!profile) {
-    return null
-  }
+  if (!profile) return null
 
   const fullName = [
     profile.first_name,
     profile.last_name
+  ].filter(Boolean).join(' ')
+
+  const fields = [
+    {
+      name: 'username',
+      label: 'Nombre de usuario',
+      type: 'text'
+    },
+    {
+      name: 'first_name',
+      label: 'Nombre',
+      type: 'text'
+    },
+    {
+      name: 'last_name',
+      label: 'Apellido',
+      type: 'text'
+    },
+    {
+      name: 'email',
+      label: 'Correo electrónico',
+      type: 'email'
+    },
+    {
+      name: 'edad',
+      label: 'Edad',
+      type: 'number'
+    }
   ]
-    .filter(Boolean)
-    .join(' ')
 
   return (
     <main className="min-vh-100 bg-dark text-white py-5">
-
       <div className="container">
 
         <button
@@ -183,7 +334,6 @@ function Profile() {
         </button>
 
         <section className="mb-5">
-
           <span className="d-block text-danger fw-bold text-uppercase">
             Stream Platform
           </span>
@@ -193,15 +343,13 @@ function Profile() {
           </h1>
 
           <p className="text-secondary">
-            Información de tu cuenta.
+            Consultá y administrá la información de tu cuenta.
           </p>
-
         </section>
 
         <section className="profile-card">
 
           <div className="profile-header">
-
             <div className="profile-avatar">
               {profile.username
                 ?.charAt(0)
@@ -209,7 +357,6 @@ function Profile() {
             </div>
 
             <div>
-
               <span className="profile-role">
                 {formatRole(profile.rol)}
               </span>
@@ -221,102 +368,186 @@ function Profile() {
               <p className="text-secondary mb-0">
                 @{profile.username}
               </p>
-
             </div>
-
           </div>
 
           <div className="profile-divider" />
 
-          <div className="profile-information">
-
-            <div className="profile-field">
-
-              <span>
-                Nombre
-              </span>
-
-              <strong>
-                {profile.first_name ||
-                  'No especificado'}
-              </strong>
-
+          {success && (
+            <div
+              className="alert alert-success"
+              role="status"
+            >
+              {success}
             </div>
+          )}
 
-            <div className="profile-field">
+          {!editing ? (
+            <>
+              <div className="profile-information">
 
-              <span>
-                Apellido
-              </span>
+                <div className="profile-field">
+                  <span>Nombre</span>
+                  <strong>
+                    {profile.first_name ||
+                      'No especificado'}
+                  </strong>
+                </div>
 
-              <strong>
-                {profile.last_name ||
-                  'No especificado'}
-              </strong>
+                <div className="profile-field">
+                  <span>Apellido</span>
+                  <strong>
+                    {profile.last_name ||
+                      'No especificado'}
+                  </strong>
+                </div>
 
-            </div>
+                <div className="profile-field">
+                  <span>Correo electrónico</span>
+                  <strong>
+                    {profile.email ||
+                      'No especificado'}
+                  </strong>
+                </div>
 
-            <div className="profile-field">
+                <div className="profile-field">
+                  <span>Edad</span>
+                  <strong>
+                    {profile.edad !== null &&
+                    profile.edad !== undefined
+                      ? `${profile.edad} años`
+                      : 'No especificada'}
+                  </strong>
+                </div>
 
-              <span>
-                Correo electrónico
-              </span>
+                <div className="profile-field">
+                  <span>Género</span>
+                  <strong>
+                    {formatGender(profile.genero)}
+                  </strong>
+                </div>
 
-              <strong>
-                {profile.email ||
-                  'No especificado'}
-              </strong>
+                <div className="profile-field">
+                  <span>Miembro desde</span>
+                  <strong>
+                    {formatDate(
+                      profile.fecha_creacion
+                    )}
+                  </strong>
+                </div>
 
-            </div>
+              </div>
 
-            <div className="profile-field">
+              <button
+                type="button"
+                className="btn btn-danger mt-4"
+                onClick={handleEdit}
+              >
+                Editar perfil
+              </button>
+            </>
+          ) : (
+            <form onSubmit={handleSave}>
 
-              <span>
-                Edad
-              </span>
+              {fields.map((field) => (
+                <div className="mb-3" key={field.name}>
+                  <label
+                    className="form-label"
+                    htmlFor={field.name}
+                  >
+                    {field.label}
+                  </label>
 
-              <strong>
-                {profile.edad
-                  ? `${profile.edad} años`
-                  : 'No especificada'}
-              </strong>
+                  <input
+                    id={field.name}
+                    name={field.name}
+                    type={field.type}
+                    className="form-control bg-dark text-white border-secondary"
+                    value={form[field.name] ?? ''}
+                    onChange={handleChange}
+                    min={
+                      field.name === 'edad'
+                        ? 0
+                        : undefined
+                    }
+                    required={
+                      field.name === 'username'
+                    }
+                    disabled={saving}
+                  />
+                </div>
+              ))}
 
-            </div>
+              <div className="mb-4">
+                <label
+                  className="form-label"
+                  htmlFor="genero"
+                >
+                  Género
+                </label>
 
-            <div className="profile-field">
+                <select
+                  id="genero"
+                  name="genero"
+                  className="form-select bg-dark text-white border-secondary"
+                  value={form.genero ?? ''}
+                  onChange={handleChange}
+                  disabled={saving}
+                >
+                  <option value="">
+                    No especificado
+                  </option>
+                  <option value="masculino">
+                    Masculino
+                  </option>
+                  <option value="femenino">
+                    Femenino
+                  </option>
+                  <option value="otro">
+                    Otro
+                  </option>
+                  <option value="no_decir">
+                    Prefiero no decir
+                  </option>
+                </select>
+              </div>
 
-              <span>
-                Género
-              </span>
+              {formError && (
+                <div
+                  className="alert alert-danger"
+                  role="alert"
+                >
+                  {formError}
+                </div>
+              )}
 
-              <strong>
-                {formatGender(
-                  profile.genero
-                )}
-              </strong>
+              <div className="d-flex gap-2 flex-wrap">
 
-            </div>
+                <button
+                  type="submit"
+                  className="btn btn-danger"
+                  disabled={saving}
+                >
+                  {saving
+                    ? 'Guardando...'
+                    : 'Guardar cambios'}
+                </button>
 
-            <div className="profile-field">
+                <button
+                  type="button"
+                  className="btn btn-outline-light"
+                  onClick={handleCancel}
+                  disabled={saving}
+                >
+                  Cancelar
+                </button>
 
-              <span>
-                Miembro desde
-              </span>
-
-              <strong>
-                {formatDate(
-                  profile.fecha_creacion
-                )}
-              </strong>
-
-            </div>
-
-          </div>
+              </div>
+            </form>
+          )}
 
         </section>
-
       </div>
-
     </main>
   )
 }

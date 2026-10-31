@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 
 import {
@@ -7,10 +8,18 @@ import {
 
 import { useAuth } from '../context/AuthContext'
 
+
 function Navbar() {
   const navigate = useNavigate()
+
   const { usuario, logout } = useAuth()
+
   const [cerrandoSesion, setCerrandoSesion] = useState(false)
+
+
+  // ==========================================
+  // CERRAR SESIÓN
+  // ==========================================
 
   const handleLogout = async () => {
     setCerrandoSesion(true)
@@ -20,9 +29,12 @@ function Navbar() {
     navigate('/login')
   }
 
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container">
+
+        {/* LOGO */}
 
         <NavLink
           className="navbar-brand streaming-logo"
@@ -37,6 +49,9 @@ function Navbar() {
           </span>
         </NavLink>
 
+
+        {/* MENÚ RESPONSIVE */}
+
         <button
           className="navbar-toggler"
           type="button"
@@ -49,11 +64,14 @@ function Navbar() {
           <span className="navbar-toggler-icon"></span>
         </button>
 
+
         <div
           className="collapse navbar-collapse"
           id="navbarMenu"
         >
           <ul className="navbar-nav ms-auto align-items-lg-center">
+
+            {/* INICIO */}
 
             <li className="nav-item">
               <NavLink
@@ -69,6 +87,9 @@ function Navbar() {
               </NavLink>
             </li>
 
+
+            {/* CATÁLOGO */}
+
             <li className="nav-item">
               <NavLink
                 className={({ isActive }) =>
@@ -82,6 +103,9 @@ function Navbar() {
               </NavLink>
             </li>
 
+
+            {/* PELÍCULAS */}
+
             <li className="nav-item">
               <NavLink
                 className="nav-link"
@@ -91,6 +115,9 @@ function Navbar() {
               </NavLink>
             </li>
 
+
+            {/* SERIES */}
+
             <li className="nav-item">
               <NavLink
                 className="nav-link"
@@ -99,6 +126,9 @@ function Navbar() {
                 Series
               </NavLink>
             </li>
+
+
+            {/* HISTORIAL */}
 
             <li className="nav-item">
               <NavLink
@@ -113,13 +143,32 @@ function Navbar() {
               </NavLink>
             </li>
 
+
+            {/* USUARIO AUTENTICADO */}
+
             {usuario && (
               <>
+
+                {/* ACCESO AL PERFIL */}
+
                 <li className="nav-item">
-                  <span className="nav-link">
+
+                  <NavLink
+                    className={({ isActive }) =>
+                      isActive
+                        ? 'nav-link active'
+                        : 'nav-link'
+                    }
+                    to="/profile"
+                    title="Ver y editar mi perfil"
+                  >
                     Hola, {usuario.username}
-                  </span>
+                  </NavLink>
+
                 </li>
+
+
+                {/* CERRAR SESIÓN */}
 
                 <li className="nav-item ms-lg-2">
                   <button
@@ -133,6 +182,7 @@ function Navbar() {
                       : 'Cerrar sesión'}
                   </button>
                 </li>
+
               </>
             )}
 
@@ -143,5 +193,6 @@ function Navbar() {
     </nav>
   )
 }
+
 
 export default Navbar
