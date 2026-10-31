@@ -1,79 +1,43 @@
-import {
-  useEffect,
-  useRef,
-  useState
-} from 'react'
 
-import {
-  useNavigate,
-  useParams
-} from 'react-router-dom'
-
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import Hls from 'hls.js'
 
 import { useAuth } from '../context/AuthContext'
-
+import PlayerControls from '../components/PlayerControls'
+import '../components/PlayerControls.css'
 
 function Player() {
-
   const { id, episodeId } = useParams()
   const isEpisode = Boolean(episodeId)
   const navigate = useNavigate()
-
   const { authFetch } = useAuth()
-
   const videoRef = useRef(null)
 
-  const [contenido, setContenido] =
-    useState(null)
+  const API_URL = import.meta.env.VITE_API_URL
 
+  const [contenido, setContenido] = useState(null)
   const [episode, setEpisode] = useState(null)
-
-  // URL temporal firmada generada por Django
-  // para reproducir contenido privado desde Backblaze B2.
-  const [videoB2Url, setVideoB2Url] =
-    useState(null)
-
-  const [progresoGuardado, setProgresoGuardado] =
-    useState(0)
-
-  const [mostrarReanudacion, setMostrarReanudacion] =
-    useState(false)
-
-  const [decisionTomada, setDecisionTomada] =
-    useState(false)
-
-  const [loading, setLoading] =
-    useState(true)
-
-  const [error, setError] =
-    useState('')
-
-
-  const API_URL =
-    import.meta.env.VITE_API_URL
-
+  const [videoB2Url, setVideoB2Url] = useState(null)
+  const [progresoGuardado, setProgresoGuardado] = useState(0)
+  const [mostrarReanudacion, setMostrarReanudacion] = useState(false)
+  const [decisionTomada, setDecisionTomada] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   // ==========================================
   // SUBTÍTULOS
   // ==========================================
 
-  /*
-    Por ahora Solo Leveling es el contenido que
-    tiene pistas WebVTT disponibles.
-
-    Más adelante esta información puede venir
-    directamente desde la API.
-  */
-
   const obtenerSubtitulos = () => {
-
-    if (Number(id) !== 5 || (isEpisode && Number(episodeId) !== 1)) {
+    if (
+      Number(id) !== 5 ||
+      (isEpisode && Number(episodeId) !== 1)
+    ) {
       return []
     }
 
-    const baseUrl =
-      'http://localhost:8081/solo_leveling_ep1'
+    const baseUrl = 'http://localhost:8081/solo_leveling_ep1'
 
     return [
       {
@@ -125,22 +89,15 @@ function Player() {
     ]
   }
 
-
-  const subtitulos =
-    obtenerSubtitulos()
-
+  const subtitulos = obtenerSubtitulos()
 
   // ==========================================
   // FORMATEAR TIEMPO
   // ==========================================
 
   const formatearTiempo = (segundos) => {
-
-    const minutos =
-      Math.floor(segundos / 60)
-
-    const segundosRestantes =
-      Math.floor(segundos % 60)
+    const minutos = Math.floor(segundos / 60)
+    const segundosRestantes = Math.floor(segundos % 60)
 
     return (
       `${minutos}:` +
@@ -148,45 +105,28 @@ function Player() {
     )
   }
 
-
   // ==========================================
   // CARGAR CONTENIDO Y PROGRESO
   // ==========================================
 
   useEffect(() => {
-
     let activo = true
 
-
     const cargarDatos = async () => {
-
       try {
-
         setLoading(true)
         setError('')
         setVideoB2Url(null)
 
-
-        // ======================================
-        // CARGAR INFORMACIÓN DEL CONTENIDO
-        // ======================================
-
-        const responseContenido =
-          await fetch(
-            `${API_URL}/contenidos/${id}/`
-          )
-
+        const responseContenido = await fetch(
+          `${API_URL}/contenidos/${id}/`
+        )
 
         if (!responseContenido.ok) {
-
-          throw new Error(
-            'No se pudo cargar el contenido.'
-          )
+          throw new Error('No se pudo cargar el contenido.')
         }
 
-
-        const dataContenido =
-          await responseContenido.json()
+        const dataContenido = await responseContenido.json()
 
         const selectedEpisode = isEpisode
           ? (dataContenido.episodios || []).find(
@@ -195,97 +135,73 @@ function Player() {
           : null
 
         if (isEpisode && !selectedEpisode) {
-          throw new Error('El episodio solicitado no existe en esta serie.')
+          throw new Error(
+            'El episodio solicitado no existe en esta serie.'
+          )
         }
 
+        // Los episodios HLS siguen usando video_hls_url.
+        // El endpoint privado de episodios B2 todavía no
+        // está implementado en el backend actual.
         if (isEpisode && selectedEpisode.video_b2_key) {
           throw new Error(
             'La reproducción de episodios desde B2 requiere habilitar su endpoint en Django.'
           )
         }
 
-
         // ======================================
-        // BACKBLAZE B2
+        // URL FIRMADA DE BACKBLAZE B2
         // ======================================
-
-        /*
-          Si el contenido tiene un objeto asociado
-          en Backblaze B2, solicitamos a Django una
-          URL firmada temporal.
-
-          Las credenciales de B2 nunca llegan
-          al frontend.
-        */
 
         let b2Url = null
 
         if (!isEpisode && dataContenido.video_b2_key) {
-
-          console.log(
-            'Contenido disponible en Backblaze B2.'
+          const responsePlay = await authFetch(
+            `${API_URL}/contenidos/${id}/play/`
           )
 
-          const responsePlay =
-            await authFetch(
-              `${API_URL}/contenidos/${id}/play/`
-            )
-
-
           if (!responsePlay.ok) {
-
             throw new Error(
               'No se pudo obtener el video desde Backblaze B2.'
             )
           }
 
-
-          const dataPlay =
-            await responsePlay.json()
-
-
-          b2Url =
-            dataPlay.video_url
-
-
-          console.log(
-            'URL temporal de Backblaze B2 obtenida correctamente.'
-          )
+          const dataPlay = await responsePlay.json()
+          b2Url = dataPlay.video_url
         }
 
-
         // ======================================
-        // CARGAR PROGRESO
+        // RECUPERAR PROGRESO
         // ======================================
 
-        let progreso = 0
+        const responseVisualizaciones = await authFetch(
+          `${API_URL}/visualizaciones/`
+        )
 
-        {
-          const responseVisualizaciones = await authFetch(
-            `${API_URL}/visualizaciones/`
-          )
+        if (!responseVisualizaciones.ok) {
+          throw new Error('No se pudo recuperar el progreso.')
+        }
 
-          if (!responseVisualizaciones.ok) {
-            throw new Error('No se pudo recuperar el progreso.')
-          }
+        const visualizaciones =
+          await responseVisualizaciones.json()
 
-          const visualizaciones = await responseVisualizaciones.json()
-          const items = Array.isArray(visualizaciones)
-            ? visualizaciones
-            : (visualizaciones.results || [])
+        const items = Array.isArray(visualizaciones)
+          ? visualizaciones
+          : (visualizaciones.results || [])
 
-          const visualizacion = items.find(
-            (item) =>
-              Number(item.contenido) === Number(id) &&
-              (isEpisode
+        const visualizacion = items.find(
+          (item) =>
+            Number(item.contenido) === Number(id) &&
+            (
+              isEpisode
                 ? Number(item.episodio) === Number(episodeId)
-                : item.episodio == null)
-          )
+                : item.episodio == null
+            )
+        )
 
-          progreso = visualizacion
-            ? Number(visualizacion.progreso_segundos) || 0
-            : 0
-        }
+        const progreso = visualizacion
+          ? Number(visualizacion.progreso_segundos) || 0
+          : 0
 
         if (activo) {
           setContenido(dataContenido)
@@ -295,220 +211,117 @@ function Player() {
           setMostrarReanudacion(progreso > 0)
           setDecisionTomada(progreso === 0)
         }
-
-      } catch (error) {
-
-        console.error(
-          'Error al cargar el reproductor:',
-          error
-        )
-
+      } catch (err) {
+        console.error('Error al cargar el reproductor:', err)
 
         if (activo) {
-
           setError(
-            error.message ||
-            'No se pudo cargar el reproductor.'
+            err.message || 'No se pudo cargar el reproductor.'
           )
         }
-
       } finally {
-
         if (activo) {
           setLoading(false)
         }
       }
     }
 
-
     cargarDatos()
-
 
     return () => {
       activo = false
     }
-
   }, [API_URL, id, episodeId, isEpisode, authFetch])
 
-
   // ==========================================
-  // CONFIGURAR VIDEO / B2 / HLS
+  // CONFIGURAR VIDEO: B2 / HLS / DIRECTO
   // ==========================================
 
   useEffect(() => {
-
-    const video =
-      videoRef.current
-
+    const video = videoRef.current
 
     if (!video || !contenido) {
       return
     }
 
+    const hlsUrl = isEpisode
+      ? episode?.video_hls_url
+      : contenido.video_hls_url
 
-    const b2Url =
-      videoB2Url
+    const videoUrl = isEpisode
+      ? null
+      : contenido.video_url
 
-    const hlsUrl =
-      isEpisode ? episode?.video_hls_url : contenido.video_hls_url
-
-    const videoUrl =
-      isEpisode ? null : contenido.video_url
-
-
-    // ========================================
     // PRIORIDAD 1: BACKBLAZE B2
-    // ========================================
 
-    if (b2Url) {
-
-      console.log(
-        'Cargando video desde Backblaze B2.'
-      )
-
-      video.src = b2Url
-
+    if (videoB2Url) {
+      video.src = videoB2Url
 
       return () => {
-
         video.pause()
         video.removeAttribute('src')
         video.load()
       }
     }
 
-
-    // ========================================
     // PRIORIDAD 2: HLS
-    // ========================================
 
     if (hlsUrl) {
-
-      console.log(
-        'Cargando HLS desde la API:',
-        hlsUrl
-      )
-
-
-      // Safari y navegadores con soporte
-      // HLS nativo.
-
       if (
-        video.canPlayType(
-          'application/vnd.apple.mpegurl'
-        )
+        video.canPlayType('application/vnd.apple.mpegurl')
       ) {
-
         video.src = hlsUrl
 
-
         return () => {
-
           video.pause()
           video.removeAttribute('src')
           video.load()
         }
       }
 
-
-      // Chrome, Firefox, Edge, etc.
-      // utilizan hls.js.
-
       if (Hls.isSupported()) {
+        const hls = new Hls()
 
-        const hls =
-          new Hls()
+        hls.loadSource(hlsUrl)
+        hls.attachMedia(video)
 
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          console.log('Manifiesto HLS cargado correctamente.')
+        })
 
-        hls.loadSource(
-          hlsUrl
-        )
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          console.error('Error HLS:', data)
 
-
-        hls.attachMedia(
-          video
-        )
-
-
-        hls.on(
-          Hls.Events.MANIFEST_PARSED,
-          () => {
-
-            console.log(
-              'Manifiesto HLS cargado correctamente.'
+          if (data.fatal) {
+            setError(
+              'Ocurrió un error al reproducir el contenido HLS.'
             )
           }
-        )
-
-
-        hls.on(
-          Hls.Events.ERROR,
-          (event, data) => {
-
-            console.error(
-              'Error HLS:',
-              data
-            )
-
-
-            if (data.fatal) {
-
-              setError(
-                'Ocurrió un error al reproducir el contenido HLS.'
-              )
-            }
-          }
-        )
-
+        })
 
         return () => {
-
           hls.destroy()
         }
       }
 
-
-      setError(
-        'Este navegador no soporta reproducción HLS.'
-      )
-
+      setError('Este navegador no soporta reproducción HLS.')
       return
     }
 
-
-    // ========================================
     // PRIORIDAD 3: VIDEO DIRECTO
-    // ========================================
 
     if (videoUrl) {
-
-      console.log(
-        'Cargando video directo:',
-        videoUrl
-      )
-
       video.src = videoUrl
 
-
       return () => {
-
         video.pause()
         video.removeAttribute('src')
         video.load()
       }
     }
 
-
-    // ========================================
-    // SIN VIDEO
-    // ========================================
-
-    console.warn(
-      'El contenido no tiene video disponible.'
-    )
-
+    console.warn('El contenido no tiene video disponible.')
   }, [contenido, episode, isEpisode, videoB2Url])
-
 
   // ==========================================
   // GUARDAR PROGRESO
@@ -517,215 +330,122 @@ function Player() {
   const guardarProgreso = async (
     segundosPersonalizados = null
   ) => {
+    const video = videoRef.current
 
-    const video =
-      videoRef.current
-
-
-    let segundos =
-      segundosPersonalizados
-
+    let segundos = segundosPersonalizados
 
     if (segundos === null) {
-
-      if (!video) {
-        return
-      }
-
-      segundos =
-        Math.floor(video.currentTime)
+      if (!video) return
+      segundos = Math.floor(video.currentTime)
     }
 
+    segundos = Math.floor(Number(segundos))
 
-    segundos =
-      Math.floor(Number(segundos))
-
-
-    if (
-      !Number.isFinite(segundos) ||
-      segundos < 0
-    ) {
+    if (!Number.isFinite(segundos) || segundos < 0) {
       return
     }
 
-
     try {
-
-      const response =
-        await authFetch(
-          `${API_URL}/visualizaciones/`,
-          {
-            method: 'POST',
-
-            headers: {
-              'Content-Type':
-                'application/json'
-            },
-
-            body: JSON.stringify({
-              contenido: Number(id),
-              episodio: isEpisode ? Number(episodeId) : null,
-              progreso_segundos: segundos
-            })
-          }
-        )
-
+      const response = await authFetch(
+        `${API_URL}/visualizaciones/`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contenido: Number(id),
+            episodio: isEpisode ? Number(episodeId) : null,
+            progreso_segundos: segundos
+          })
+        }
+      )
 
       if (!response.ok) {
-
-        console.error(
-          'No se pudo guardar el progreso.'
-        )
-
+        console.error('No se pudo guardar el progreso.')
         return
       }
 
-
-      setProgresoGuardado(
-        segundos
-      )
-
-
-      console.log(
-        `Progreso guardado: ${segundos} segundos`
-      )
-
-    } catch (error) {
-
-      console.error(
-        'Error al guardar el progreso:',
-        error
-      )
+      setProgresoGuardado(segundos)
+      console.log(`Progreso guardado: ${segundos} segundos`)
+    } catch (err) {
+      console.error('Error al guardar el progreso:', err)
     }
   }
-
 
   // ==========================================
   // CONTINUAR VIDEO
   // ==========================================
 
   const continuarVideo = async () => {
+    const video = videoRef.current
 
-    const video =
-      videoRef.current
+    if (!video) return
 
-
-    if (!video) {
-      return
-    }
-
-
-    let tiempoContinuacion =
-      progresoGuardado
-
+    let tiempoContinuacion = progresoGuardado
 
     if (
       Number.isFinite(video.duration) &&
       tiempoContinuacion >= video.duration
     ) {
-
       tiempoContinuacion = 0
     }
 
-
-    video.currentTime =
-      tiempoContinuacion
-
+    video.currentTime = tiempoContinuacion
 
     setMostrarReanudacion(false)
     setDecisionTomada(true)
 
-
     try {
-
       await video.play()
-
-    } catch (error) {
-
-      console.error(
-        'El navegador no pudo iniciar el video:',
-        error
-      )
+    } catch (err) {
+      console.error('No se pudo iniciar el video:', err)
     }
   }
-
 
   // ==========================================
   // EMPEZAR DESDE EL INICIO
   // ==========================================
 
   const empezarDesdeInicio = async () => {
+    const video = videoRef.current
 
-    const video =
-      videoRef.current
-
-
-    if (!video) {
-      return
-    }
-
+    if (!video) return
 
     video.currentTime = 0
-
 
     setMostrarReanudacion(false)
     setDecisionTomada(true)
 
-
     await guardarProgreso(0)
 
-
     try {
-
       await video.play()
-
-    } catch (error) {
-
-      console.error(
-        'El navegador no pudo iniciar el video:',
-        error
-      )
+    } catch (err) {
+      console.error('No se pudo iniciar el video:', err)
     }
   }
-
 
   // ==========================================
   // GUARDADO AUTOMÁTICO CADA 10 SEGUNDOS
   // ==========================================
 
   useEffect(() => {
-
-    if (
-      !contenido ||
-      !decisionTomada
-    ) {
+    if (!contenido || !decisionTomada) {
       return
     }
 
+    const intervalo = setInterval(() => {
+      const video = videoRef.current
 
-    const intervalo =
-      setInterval(() => {
-
-        const video =
-          videoRef.current
-
-
-        if (
-          video &&
-          !video.paused &&
-          !video.ended
-        ) {
-
-          guardarProgreso()
-        }
-
-      }, 10000)
-
+      if (video && !video.paused && !video.ended) {
+        guardarProgreso()
+      }
+    }, 10000)
 
     return () => {
       clearInterval(intervalo)
     }
-
   }, [
     contenido,
     id,
@@ -734,41 +454,25 @@ function Player() {
     authFetch
   ])
 
-
   // ==========================================
-  // PAUSA
+  // PAUSA Y FINALIZACIÓN
   // ==========================================
 
   const manejarPausa = () => {
-
-    if (!decisionTomada) {
-      return
-    }
-
+    if (!decisionTomada) return
     guardarProgreso()
   }
-
-
-  // ==========================================
-  // FINALIZADO
-  // ==========================================
 
   const manejarFinalizado = () => {
-
-    if (!decisionTomada) {
-      return
-    }
-
+    if (!decisionTomada) return
     guardarProgreso()
   }
-
 
   // ==========================================
   // VOLVER
   // ==========================================
 
   const volverInicio = async () => {
-
     if (decisionTomada) {
       await guardarProgreso()
     }
@@ -776,33 +480,16 @@ function Player() {
     navigate(isEpisode ? `/content/${id}` : '/')
   }
 
-
   // ==========================================
-  // LOADING
+  // CARGANDO
   // ==========================================
 
   if (loading) {
-
     return (
-      <div
-        className="
-          min-vh-100
-          bg-black
-          text-white
-          d-flex
-          justify-content-center
-          align-items-center
-        "
-      >
-
+      <div className="min-vh-100 bg-black text-white d-flex justify-content-center align-items-center">
         <div className="text-center">
-
           <div
-            className="
-              spinner-border
-              text-danger
-              mb-3
-            "
+            className="spinner-border text-danger mb-3"
             role="status"
           >
             <span className="visually-hidden">
@@ -810,44 +497,22 @@ function Player() {
             </span>
           </div>
 
-          <p>
-            Cargando contenido...
-          </p>
-
+          <p>Cargando contenido...</p>
         </div>
-
       </div>
     )
   }
-
 
   // ==========================================
   // ERROR
   // ==========================================
 
   if (error) {
-
     return (
-      <div
-        className="
-          min-vh-100
-          bg-black
-          text-white
-          d-flex
-          justify-content-center
-          align-items-center
-        "
-      >
-
+      <div className="min-vh-100 bg-black text-white d-flex justify-content-center align-items-center">
         <div className="text-center">
-
-          <h2 className="mb-3">
-            Error
-          </h2>
-
-          <p>
-            {error}
-          </p>
+          <h2 className="mb-3">Error</h2>
+          <p>{error}</p>
 
           <button
             className="btn btn-danger"
@@ -855,314 +520,173 @@ function Player() {
           >
             Volver al inicio
           </button>
-
         </div>
-
       </div>
     )
   }
-
 
   if (!contenido) {
     return null
   }
 
+  // ==========================================
+  // COMPROBAR DISPONIBILIDAD
+  // ==========================================
+
+  const hayVideo = Boolean(
+    videoB2Url ||
+    (
+      isEpisode
+        ? episode?.video_hls_url
+        : contenido.video_hls_url
+    ) ||
+    (!isEpisode && contenido.video_url)
+  )
 
   // ==========================================
-  // PLAYER
+  // REPRODUCTOR PERSONALIZADO
   // ==========================================
-
-  const hayVideo =
-    Boolean(
-      videoB2Url ||
-      (isEpisode ? episode?.video_hls_url : contenido.video_hls_url) ||
-      (!isEpisode && contenido.video_url)
-    )
-
 
   return (
-    <div
-      className="
-        min-vh-100
-        bg-black
-        text-white
-        position-relative
-      "
-    >
-
+    <div className="min-vh-100 bg-black text-white position-relative">
       <div className="container py-4">
-
         <button
-          className="
-            btn
-            btn-outline-light
-            mb-4
-          "
+          className="btn btn-outline-light mb-4"
           onClick={volverInicio}
         >
           ← Volver
         </button>
 
-
         <h1 className="mb-2">
           {contenido.titulo}
-          {episode ? ` — T${episode.temporada} E${episode.numero}: ${episode.titulo}` : ''}
+          {episode
+            ? ` — T${episode.temporada} E${episode.numero}: ${episode.titulo}`
+            : ''}
         </h1>
 
-
         <p className="text-secondary">
-
           {contenido.genero}
-
           {' • '}
-
           {contenido.anio}
-
           {' • '}
-
-          {episode ? episode.duracion_min : contenido.duracion_min} min
-
+          {episode
+            ? episode.duracion_min
+            : contenido.duracion_min} min
         </p>
 
-
         {hayVideo ? (
-
-          <div
-            className="
-              ratio
-              ratio-16x9
-              mt-4
-              bg-black
-            "
-          >
-
+          <div className="sp-player-wrapper ratio ratio-16x9 mt-4">
             <video
               ref={videoRef}
-              controls={decisionTomada}
+              controls={false}
               crossOrigin="anonymous"
               className="w-100"
-
-              onPause={
-                manejarPausa
-              }
-
-              onEnded={
-                manejarFinalizado
-              }
+              playsInline
+              onPause={manejarPausa}
+              onEnded={manejarFinalizado}
             >
+              {subtitulos.map((subtitulo) => (
+                <track
+                  key={subtitulo.src}
+                  kind="subtitles"
+                  src={subtitulo.src}
+                  srcLang={subtitulo.srcLang}
+                  label={subtitulo.label}
+                  default={Boolean(subtitulo.default)}
+                />
+              ))}
 
-              {subtitulos.map(
-                (subtitulo) => (
-
-                  <track
-                    key={subtitulo.src}
-                    kind="subtitles"
-                    src={subtitulo.src}
-                    srcLang={subtitulo.srcLang}
-                    label={subtitulo.label}
-                    default={
-                      Boolean(
-                        subtitulo.default
-                      )
-                    }
-                  />
-
-                )
-              )}
-
-              Tu navegador no soporta
-              reproducción de video.
-
+              Tu navegador no soporta reproducción de video.
             </video>
 
+            <PlayerControls
+              videoRef={videoRef}
+              enabled={decisionTomada}
+            />
           </div>
-
         ) : (
-
-          <div
-            className="
-              alert
-              alert-warning
-              mt-4
-            "
-          >
-
-            Este contenido todavía no tiene
-            un video disponible.
-
+          <div className="alert alert-warning mt-4">
+            Este contenido todavía no tiene un video disponible.
           </div>
-
         )}
-
       </div>
-
 
       {/* =====================================
           MODAL CONTINUAR VIENDO
       ====================================== */}
 
       {mostrarReanudacion && (
-
         <div
-          className="
-            position-fixed
-            top-0
-            start-0
-            w-100
-            h-100
-            d-flex
-            justify-content-center
-            align-items-center
-          "
-
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
           style={{
-            backgroundColor:
-              'rgba(0, 0, 0, 0.88)',
-
+            backgroundColor: 'rgba(0, 0, 0, 0.88)',
             zIndex: 9999,
-
-            backdropFilter:
-              'blur(8px)'
+            backdropFilter: 'blur(8px)'
           }}
         >
-
           <div
-            className="
-              text-center
-              p-4
-              p-md-5
-              rounded-4
-              shadow-lg
-            "
-
+            className="text-center p-4 p-md-5 rounded-4 shadow-lg"
             style={{
               background:
                 'linear-gradient(145deg, #181818, #0d0d0d)',
-
               border:
                 '1px solid rgba(255,255,255,0.12)',
-
-              maxWidth:
-                '520px',
-
-              width:
-                '90%'
+              maxWidth: '520px',
+              width: '90%'
             }}
           >
-
-            <div
-              className="
-                text-danger
-                fw-bold
-                text-uppercase
-                mb-2
-              "
-            >
+            <div className="text-danger fw-bold text-uppercase mb-2">
               Stream Platform
             </div>
-
 
             <h2 className="fw-bold mb-3">
               ¿Continuar viendo?
             </h2>
 
-
-            <p
-              className="
-                text-secondary
-                fs-5
-                mb-4
-              "
-            >
-
+            <p className="text-secondary fs-5 mb-4">
               Dejaste{' '}
-
               <strong className="text-white">
                 {contenido.titulo}
+                {episode
+                  ? ` — T${episode.temporada} E${episode.numero}`
+                  : ''}
               </strong>
-
               {' '}en{' '}
-
               <strong className="text-white">
-
-                {formatearTiempo(
-                  progresoGuardado
-                )}
-
+                {formatearTiempo(progresoGuardado)}
               </strong>.
-
             </p>
 
-
-            <div
-              className="
-                d-grid
-                gap-3
-              "
-            >
-
+            <div className="d-grid gap-3">
               <button
-                className="
-                  btn
-                  btn-streaming
-                  btn-lg
-                "
-
-                onClick={
-                  continuarVideo
-                }
+                className="btn btn-streaming btn-lg"
+                onClick={continuarVideo}
               >
-
                 ▶ Continuar desde{' '}
-
-                {formatearTiempo(
-                  progresoGuardado
-                )}
-
+                {formatearTiempo(progresoGuardado)}
               </button>
 
-
               <button
-                className="
-                  btn
-                  btn-outline-light
-                  btn-lg
-                "
-
-                onClick={
-                  empezarDesdeInicio
-                }
+                className="btn btn-outline-light btn-lg"
+                onClick={empezarDesdeInicio}
               >
                 ↻ Empezar desde el inicio
               </button>
 
-
               <button
-                className="
-                  btn
-                  btn-link
-                  text-secondary
-                  text-decoration-none
-                "
-
+                className="btn btn-link text-secondary text-decoration-none"
                 onClick={() =>
                   navigate(isEpisode ? `/content/${id}` : '/')
                 }
               >
                 Volver al inicio
               </button>
-
             </div>
-
           </div>
-
         </div>
-
       )}
-
     </div>
   )
 }
-
 
 export default Player
