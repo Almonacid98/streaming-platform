@@ -1,0 +1,212 @@
+
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+
+<h1>Subir archivos HLS a Backblaze B2</h1>
+
+<p><strong>Serie:</strong> {{ episodio.serie.titulo }}</p>
+<p><strong>Temporada:</strong> {{ episodio.temporada }}</p>
+<p><strong>Episodio:</strong> {{ episodio.numero }} - {{ episodio.titulo }}</p>
+
+<hr>
+
+<form
+    method="post"
+    enctype="multipart/form-data"
+    id="form-subir-hls"
+>
+    {% csrf_token %}
+
+    <!-- Rutas relativas que se enviarán a Django -->
+    <div id="rutas-archivos"></div>
+
+    <div style="margin: 25px 0;">
+        <label for="id_archivos">
+            <strong>Seleccionar carpeta HLS:</strong>
+        </label>
+
+        <input
+            type="file"
+            id="id_archivos"
+            name="archivos"
+            webkitdirectory
+            directory
+            multiple
+            required
+        >
+    </div>
+
+    <p id="cantidad-archivos">
+        No se seleccionaron archivos.
+    </p>
+
+    <p id="tamano-total"></p>
+
+    <p id="estado-manifiesto"></p>
+
+    <div style="margin-top: 25px;">
+        <button
+            type="submit"
+            class="default"
+            id="boton-subir"
+            disabled
+        >
+            Subir a Backblaze B2
+        </button>
+    </div>
+</form>
+
+<hr>
+
+<p>
+    <a href="{% url 'admin:core_episodio_changelist' %}">
+        Volver a episodios
+    </a>
+</p>
+
+<script>
+    const formulario = document.getElementById("form-subir-hls");
+    const input = document.getElementById("id_archivos");
+    const contador = document.getElementById("cantidad-archivos");
+    const tamano = document.getElementById("tamano-total");
+    const estado = document.getElementById("estado-manifiesto");
+    const boton = document.getElementById("boton-subir");
+    const contenedorRutas = document.getElementById("rutas-archivos");
+
+    // ==========================================
+    // VALIDAR CARPETA SELECCIONADA
+    // ==========================================
+
+    input.addEventListener("change", function () {
+
+        const archivos = Array.from(input.files);
+
+        boton.disabled = true;
+        contenedorRutas.replaceChildren();
+
+        // Mostrar cantidad de archivos
+        contador.textContent =
+            `${archivos.length} archivos seleccionados`;
+
+        // Calcular tamaño total
+        const totalBytes = archivos.reduce(
+            (total, archivo) => total + archivo.size,
+            0
+        );
+
+        const totalMB = (
+            totalBytes / (1024 * 1024)
+        ).toFixed(2);
+
+        tamano.textContent =
+            `Tamaño total: ${totalMB} MB`;
+
+        // Comprobar manifiesto principal
+        const manifiestos = archivos.filter(archivo => {
+            const ruta = archivo.webkitRelativePath;
+            const partes = ruta.split("/");
+
+            return (
+                partes.length === 2 &&
+                partes[1] === "index.m3u8"
+            );
+        });
+
+        // Extensiones admitidas
+        const extensionesPermitidas = [
+            ".m3u8",
+            ".ts",
+            ".vtt"
+        ];
+
+        const archivosInvalidos = archivos.filter(
+            archivo => !extensionesPermitidas.some(
+                extension =>
+                    archivo.name.toLowerCase().endsWith(extension)
+            )
+        );
+
+        const segmentos = archivos.filter(
+            archivo => archivo.name.toLowerCase().endsWith(".ts")
+        );
+
+        const rutas = archivos.map(
+            archivo => archivo.webkitRelativePath
+        );
+
+        const rutasDuplicadas =
+            new Set(rutas).size !== rutas.length;
+
+        // ==========================================
+        // VALIDACIONES
+        // ==========================================
+
+        if (archivos.length === 0) {
+            estado.textContent =
+                "Seleccioná una carpeta HLS.";
+            return;
+        }
+
+        if (manifiestos.length !== 1) {
+            estado.textContent =
+                "❌ La carpeta debe contener index.m3u8 en su raíz.";
+            return;
+        }
+
+        if (archivosInvalidos.length > 0) {
+            estado.textContent =
+                "❌ La carpeta contiene archivos no permitidos.";
+            return;
+        }
+
+        if (segmentos.length === 0) {
+            estado.textContent =
+                "❌ No se encontraron segmentos de video .ts.";
+            return;
+        }
+
+        if (rutasDuplicadas) {
+            estado.textContent =
+                "❌ Se encontraron rutas de archivos duplicadas.";
+            return;
+        }
+
+        // ==========================================
+        // GENERAR RUTAS PARA DJANGO
+        // ==========================================
+
+        archivos.forEach(archivo => {
+
+            const campo = document.createElement("input");
+
+            campo.type = "hidden";
+            campo.name = "rutas";
+            campo.value = archivo.webkitRelativePath;
+
+            contenedorRutas.appendChild(campo);
+        });
+
+        estado.textContent =
+            "✅ Carpeta HLS detectada correctamente.";
+
+        boton.disabled = false;
+    });
+
+    // ==========================================
+    // EVITAR ENVÍOS DUPLICADOS
+    // ==========================================
+
+    formulario.addEventListener("submit", function (event) {
+
+        if (boton.disabled) {
+            event.preventDefault();
+            return;
+        }
+
+        boton.disabled = true;
+        boton.textContent = "Subiendo archivos, esperá...";
+    });
+</script>
+
+{% endblock %}
