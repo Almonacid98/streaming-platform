@@ -1,4 +1,3 @@
-
 from django.conf import settings
 from django.db.models import Count
 from django.http import HttpResponse
@@ -408,6 +407,16 @@ class VisualizacionViewSet(viewsets.ModelViewSet):
 
     serializer_class = VisualizacionSerializer
 
+    # El historial se consulta, registra y elimina.
+    # Evita modificaciones directas que omitan las validaciones de create().
+    http_method_names = [
+        'get',
+        'post',
+        'delete',
+        'head',
+        'options',
+    ]
+
     permission_classes = [
         IsAuthenticatedClient
     ]
@@ -429,6 +438,7 @@ class VisualizacionViewSet(viewsets.ModelViewSet):
                 'contenido__creador',
                 'episodio'
             )
+            .prefetch_related('contenido__episodios')
             .order_by(
                 '-fecha_visualizacion'
             )
@@ -516,6 +526,29 @@ class VisualizacionViewSet(viewsets.ModelViewSet):
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
+
+        # Para series, cada reproducción debe identificar su episodio.
+        # Una película, en cambio, no puede asociarse a episodios.
+        if contenido.tipo == Contenido.Tipos.SERIE and episodio is None:
+            return Response(
+                {
+                    'error': (
+                        'Para registrar una serie debe indicar '
+                        'el episodio reproducido.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if contenido.tipo == Contenido.Tipos.PELICULA and episodio is not None:
+            return Response(
+                {
+                    'error': (
+                        'Una película no puede tener un episodio asociado.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             progreso_segundos = int(

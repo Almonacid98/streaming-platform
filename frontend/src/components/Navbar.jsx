@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 
 import {
@@ -144,15 +143,31 @@ function Navbar() {
             </li>
 
 
+            {/* MI LISTA */}
+
+            <li className="nav-item">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? 'nav-link active'
+                    : 'nav-link'
+                }
+                to="/my-list"
+              >
+                <span className="me-1">♡</span>
+                Mi lista
+              </NavLink>
+            </li>
+
+
             {/* USUARIO AUTENTICADO */}
 
             {usuario && (
               <>
 
-                {/* ACCESO AL PERFIL */}
+                {/* PERFIL */}
 
                 <li className="nav-item">
-
                   <NavLink
                     className={({ isActive }) =>
                       isActive
@@ -164,7 +179,6 @@ function Navbar() {
                   >
                     Hola, {usuario.username}
                   </NavLink>
-
                 </li>
 
 

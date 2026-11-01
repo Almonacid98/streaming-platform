@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Hls from 'hls.js'
@@ -13,6 +12,16 @@ function Player() {
   const navigate = useNavigate()
   const { authFetch } = useAuth()
   const videoRef = useRef(null)
+  const authFetchRef = useRef(authFetch)
+  authFetchRef.current = authFetch
+
+  // Cada película/episodio tiene su propia cola de guardados.
+  // Las peticiones se envían en orden, sin sobrescribir avances nuevos.
+  const playbackKey = `${id}:${episodeId || 'pelicula'}`
+  const saveQueueRef = useRef({ key: playbackKey, promise: Promise.resolve() })
+  if (saveQueueRef.current.key !== playbackKey) {
+    saveQueueRef.current = { key: playbackKey, promise: Promise.resolve() }
+  }
 
   const API_URL = import.meta.env.VITE_API_URL
 
@@ -123,7 +132,7 @@ function Player() {
         let nuevosSubtitulos = []
 
         if (isEpisode && selectedEpisode.video_b2_key) {
-          const respuestaHls = await authFetch(
+          const respuestaHls = await authFetchRef.current(
             `${API_URL}/episodios/${episodeId}/play/`
           )
 
@@ -141,7 +150,7 @@ function Player() {
           )
           blobCreado = nuevoManifiesto
 
-          const respuestaSubtitulos = await authFetch(
+          const respuestaSubtitulos = await authFetchRef.current(
             `${API_URL}/episodios/${episodeId}/subtitulos/`
           )
           if (!respuestaSubtitulos.ok) {
@@ -159,7 +168,7 @@ function Player() {
         let b2Url = null
 
         if (!isEpisode && dataContenido.video_b2_key) {
-          const responsePlay = await authFetch(
+          const responsePlay = await authFetchRef.current(
             `${API_URL}/contenidos/${id}/play/`
           )
 
@@ -177,30 +186,37 @@ function Player() {
         // RECUPERAR PROGRESO
         // ======================================
 
-        const responseVisualizaciones = await authFetch(
-          `${API_URL}/visualizaciones/`
-        )
+        // DRF puede paginar el historial. Buscamos en todas las páginas
+        // hasta encontrar la película o el episodio exacto.
+        let nextUrl = `${API_URL}/visualizaciones/`
+        let visualizacion = null
+        const visited = new Set()
 
-        if (!responseVisualizaciones.ok) {
-          throw new Error('No se pudo recuperar el progreso.')
-        }
+        while (nextUrl && !visualizacion) {
+          if (visited.has(nextUrl)) {
+            throw new Error('La paginación del historial contiene un ciclo.')
+          }
+          visited.add(nextUrl)
 
-        const visualizaciones =
-          await responseVisualizaciones.json()
+          const responseVisualizaciones = await authFetchRef.current(nextUrl)
+          if (!responseVisualizaciones.ok) {
+            throw new Error('No se pudo recuperar el progreso.')
+          }
 
-        const items = Array.isArray(visualizaciones)
-          ? visualizaciones
-          : (visualizaciones.results || [])
+          const data = await responseVisualizaciones.json()
+          const items = Array.isArray(data) ? data : (data.results || [])
 
-        const visualizacion = items.find(
-          (item) =>
+          visualizacion = items.find((item) =>
             Number(item.contenido) === Number(id) &&
-            (
-              isEpisode
-                ? Number(item.episodio) === Number(episodeId)
-                : item.episodio == null
-            )
-        )
+            (isEpisode
+              ? item.episodio != null && Number(item.episodio) === Number(episodeId)
+              : item.episodio == null)
+          )
+
+          nextUrl = !Array.isArray(data) && data.next
+            ? new URL(data.next, nextUrl).href
+            : null
+        }
 
         const progreso = visualizacion
           ? Number(visualizacion.progreso_segundos) || 0
@@ -237,7 +253,7 @@ function Player() {
       activo = false
       if (blobCreado) URL.revokeObjectURL(blobCreado)
     }
-  }, [API_URL, id, episodeId, isEpisode, authFetch])
+  }, [API_URL, id, episodeId, isEpisode])
 
   // ==========================================
   // CONFIGURAR VIDEO: B2 / HLS / DIRECTO
@@ -333,50 +349,55 @@ function Player() {
   // GUARDAR PROGRESO
   // ==========================================
 
-  const guardarProgreso = async (
-    segundosPersonalizados = null
-  ) => {
+  const guardarProgreso = (segundosPersonalizados = null) => {
     const video = videoRef.current
-
-    let segundos = segundosPersonalizados
-
-    if (segundos === null) {
-      if (!video) return
-      segundos = Math.floor(video.currentTime)
-    }
-
-    segundos = Math.floor(Number(segundos))
+    const valor = segundosPersonalizados === null
+      ? video?.currentTime
+      : segundosPersonalizados
+    const segundos = Math.floor(Number(valor))
 
     if (!Number.isFinite(segundos) || segundos < 0) {
-      return
+      return Promise.resolve()
     }
 
-    try {
-      const response = await authFetch(
-        `${API_URL}/visualizaciones/`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            contenido: Number(id),
-            episodio: isEpisode ? Number(episodeId) : null,
-            progreso_segundos: segundos
-          })
+    // Capturamos la identidad de esta reproducción en el momento
+    // del evento, no cuando finalmente se ejecute la petición.
+    const queue = saveQueueRef.current
+    const contenidoId = Number(id)
+    const episodioActualId = isEpisode ? Number(episodeId) : null
+
+    const enviar = async () => {
+      try {
+        const response = await authFetchRef.current(
+          `${API_URL}/visualizaciones/`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contenido: contenidoId,
+              episodio: episodioActualId,
+              progreso_segundos: segundos
+            })
+          }
+        )
+
+        if (!response.ok) {
+          console.error('No se pudo guardar el progreso:', response.status)
+          return
         }
-      )
 
-      if (!response.ok) {
-        console.error('No se pudo guardar el progreso.')
-        return
+        // Una respuesta tardía de otro episodio no cambia la UI actual.
+        if (saveQueueRef.current === queue) {
+          setProgresoGuardado(segundos)
+        }
+      } catch (err) {
+        console.error('Error al guardar el progreso:', err)
       }
-
-      setProgresoGuardado(segundos)
-      console.log(`Progreso guardado: ${segundos} segundos`)
-    } catch (err) {
-      console.error('Error al guardar el progreso:', err)
     }
+
+    // La cola sigue funcionando incluso si falla una petición.
+    queue.promise = queue.promise.then(enviar, enviar)
+    return queue.promise
   }
 
   // ==========================================
@@ -457,7 +478,7 @@ function Player() {
     id,
     episodeId,
     decisionTomada,
-    authFetch
+    playbackKey
   ])
 
   // ==========================================

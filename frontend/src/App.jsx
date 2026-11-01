@@ -12,7 +12,7 @@ import ContentDetail from './views/ContentDetail'
 import Catalog from './views/Catalog'
 import WatchHistory from './views/WatchHistory'
 import Profile from './views/Profile'
-
+import MyList from './views/MyList'
 import ProtectedRoute from './components/ProtectedRoute'
 
 
@@ -104,7 +104,16 @@ function App() {
         }
       />
 
+      {/* Mi lista / Favoritos */}
 
+      <Route
+        path="/my-list"
+        element={
+          <ProtectedRoute>
+            <MyList />
+          </ProtectedRoute>
+        }
+      />  
       {/* Perfil */}
 
       <Route
