@@ -1,4 +1,3 @@
-
 import {
   useEffect,
   useRef,
@@ -195,14 +194,11 @@ function Home() {
       return
     }
 
-    // Las series abren el modal sobre Home.
-    if (contenido.tipo?.toLowerCase() === 'serie') {
-      limpiarPreviewHero()
-      setSelectedSeriesId(contenido.apiId)
-      return
-    }
-
-    // Las películas conservan su página de detalle.
+    // Más información siempre abre la página de detalle,
+    // tanto para películas como para series.
+    // El modal de episodios se abre desde el botón
+    // Ver episodios de ContentDetail.
+    limpiarPreviewHero()
     navigate(`/content/${contenido.apiId}`)
   }
 
