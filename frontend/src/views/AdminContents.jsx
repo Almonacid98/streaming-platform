@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -30,7 +29,7 @@ function AdminContents() {
     )
 
   // ==========================================
-  // CARGAR CONTENIDOS
+  // CARGAR CONTENIDOS CON PAGINACIÓN
   // ==========================================
 
   const cargarContenidos = useCallback(async () => {
@@ -38,25 +37,61 @@ function AdminContents() {
     setError('')
 
     try {
-      const response = await authFetch(`${API_URL}/contenidos/`)
+      let url = `${API_URL}/contenidos/`
+      const todosLosContenidos = []
+      const paginasVisitadas = new Set()
 
-      if (!response.ok) {
-        throw new Error(
-          `No se pudieron cargar los contenidos (${response.status}).`
-        )
+      while (url) {
+        if (paginasVisitadas.has(url)) {
+          throw new Error(
+            'Se detectó un problema con la paginación.'
+          )
+        }
+
+        paginasVisitadas.add(url)
+
+        const response = await authFetch(url)
+
+        if (!response.ok) {
+          throw new Error(
+            `No se pudieron cargar los contenidos (${response.status}).`
+          )
+        }
+
+        const data = await response.json()
+
+        if (Array.isArray(data)) {
+          // Respuesta sin paginación
+          todosLosContenidos.push(...data)
+          url = null
+        } else {
+          // Respuesta paginada de Django REST Framework
+          if (!Array.isArray(data?.results)) {
+            throw new Error(
+              'La respuesta de contenidos no tiene el formato esperado.'
+            )
+          }
+
+          todosLosContenidos.push(...data.results)
+
+          url = data.next
+            ? new URL(data.next, url).toString()
+            : null
+        }
       }
 
-      const data = await response.json()
+      setContenidos(todosLosContenidos)
 
-      const lista = Array.isArray(data)
-        ? data
-        : Array.isArray(data.results)
-          ? data.results
-          : []
-
-      setContenidos(lista)
     } catch (err) {
-      setError(err.message || 'Error al cargar contenidos.')
+      console.error(
+        'Error al cargar contenidos:',
+        err
+      )
+
+      setError(
+        err.message || 'Error al cargar contenidos.'
+      )
+
     } finally {
       setLoading(false)
     }
@@ -95,10 +130,16 @@ function AdminContents() {
       }
 
       setContenidos((actuales) =>
-        actuales.filter((item) => item.id !== contenido.id)
+        actuales.filter(
+          (item) => item.id !== contenido.id
+        )
       )
+
     } catch (err) {
-      setError(err.message || 'Error al eliminar el contenido.')
+      setError(
+        err.message || 'Error al eliminar el contenido.'
+      )
+
     } finally {
       setEliminando(null)
     }
