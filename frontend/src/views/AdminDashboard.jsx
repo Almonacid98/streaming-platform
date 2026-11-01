@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -26,6 +27,8 @@ function AdminDashboard() {
         </div>
 
         <div className="row g-4">
+
+          {/* GESTIONAR CONTENIDOS */}
           <div className="col-md-6">
             <div className="card bg-black text-white border-secondary h-100">
               <div className="card-body p-4">
@@ -33,13 +36,18 @@ function AdminDashboard() {
                 <p className="text-white-50">
                   Consultá, editá y eliminá contenidos según tus permisos.
                 </p>
-                <Link to="/admin/content" className="btn btn-danger">
+
+                <Link
+                  to="/admin/content"
+                  className="btn btn-danger"
+                >
                   Gestionar contenidos
                 </Link>
               </div>
             </div>
           </div>
 
+          {/* CREAR CONTENIDO */}
           <div className="col-md-6">
             <div className="card bg-black text-white border-secondary h-100">
               <div className="card-body p-4">
@@ -47,22 +55,52 @@ function AdminDashboard() {
                 <p className="text-white-50">
                   Publicá una nueva película o serie en el catálogo.
                 </p>
-                <Link to="/admin/content/new" className="btn btn-danger">
+
+                <Link
+                  to="/admin/content/new"
+                  className="btn btn-danger"
+                >
                   Crear contenido
                 </Link>
               </div>
             </div>
           </div>
+
+          {/* ADMINISTRAR USUARIOS */}
+          {esAdmin && (
+            <div className="col-md-6">
+              <div className="card bg-black text-white border-secondary h-100">
+                <div className="card-body p-4">
+                  <h4>Administrar usuarios</h4>
+                  <p className="text-white-50">
+                    Consultá los usuarios registrados,
+                    modificá sus roles y administrá
+                    el estado de sus cuentas.
+                  </p>
+
+                  <Link
+                    to="/admin/users"
+                    className="btn btn-danger"
+                  >
+                    Gestionar usuarios
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
 
+        {/* INFORMACIÓN DEL ROL */}
         <div className="alert alert-secondary mt-4">
-          Tu rol: <strong>
+          Tu rol:{' '}
+          <strong>
             {usuario?.is_superuser
               ? 'Superusuario'
               : usuario?.rol}
           </strong>.
           {esAdmin
-            ? ' Podés administrar todos los contenidos.'
+            ? ' Podés administrar todos los contenidos y gestionar usuarios.'
             : ' Podés modificar solamente tus publicaciones.'}
         </div>
       </div>

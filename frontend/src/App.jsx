@@ -20,6 +20,7 @@ import MyList from './views/MyList'
 
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
+import OnlyAdminRoute from './components/OnlyAdminRoute'
 
 // ==========================================
 // ADMINISTRACIÓN DE CONTENIDOS
@@ -36,6 +37,11 @@ import AdminContentForm from './views/AdminContentForm'
 import AdminEpisodes from './views/AdminEpisodes'
 import AdminEpisodeForm from './views/AdminEpisodeForm'
 
+// ==========================================
+// ADMINISTRACIÓN DE USUARIOS
+// ==========================================
+
+import AdminUsers from './views/AdminUsers'
 
 function App() {
   return (
@@ -55,7 +61,6 @@ function App() {
         element={<Register />}
       />
 
-
       {/* =====================================
           INICIO
       ===================================== */}
@@ -68,7 +73,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-
 
       {/* =====================================
           CATÁLOGO
@@ -83,7 +87,6 @@ function App() {
         }
       />
 
-
       {/* =====================================
           DETALLE DE CONTENIDO
       ===================================== */}
@@ -96,7 +99,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-
 
       {/* =====================================
           REPRODUCTOR DE PELÍCULAS
@@ -111,7 +113,6 @@ function App() {
         }
       />
 
-
       {/* =====================================
           REPRODUCTOR DE EPISODIOS
       ===================================== */}
@@ -124,7 +125,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-
 
       {/* =====================================
           HISTORIAL
@@ -139,7 +139,6 @@ function App() {
         }
       />
 
-
       {/* =====================================
           MI LISTA / FAVORITOS
       ===================================== */}
@@ -152,7 +151,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-
 
       {/* =====================================
           PERFIL
@@ -167,7 +165,6 @@ function App() {
         }
       />
 
-
       {/* =====================================
           PANEL DE ADMINISTRACIÓN
       ===================================== */}
@@ -180,7 +177,6 @@ function App() {
           </AdminRoute>
         }
       />
-
 
       {/* =====================================
           LISTADO DE CONTENIDOS
@@ -195,7 +191,6 @@ function App() {
         }
       />
 
-
       {/* =====================================
           CREAR CONTENIDO
       ===================================== */}
@@ -208,7 +203,6 @@ function App() {
           </AdminRoute>
         }
       />
-
 
       {/* =====================================
           EDITAR CONTENIDO
@@ -223,7 +217,6 @@ function App() {
         }
       />
 
-
       {/* =====================================
           ADMINISTRAR EPISODIOS DE UNA SERIE
       ===================================== */}
@@ -236,7 +229,6 @@ function App() {
           </AdminRoute>
         }
       />
-
 
       {/* =====================================
           CREAR EPISODIO
@@ -251,7 +243,6 @@ function App() {
         }
       />
 
-
       {/* =====================================
           EDITAR EPISODIO
       ===================================== */}
@@ -265,6 +256,19 @@ function App() {
         }
       />
 
+      {/* =====================================
+          ADMINISTRAR USUARIOS
+          SOLO ADMINISTRADORES
+      ===================================== */}
+
+      <Route
+        path="/admin/users"
+        element={
+          <OnlyAdminRoute>
+            <AdminUsers />
+          </OnlyAdminRoute>
+        }
+      />
 
       {/* =====================================
           RUTA NO ENCONTRADA
