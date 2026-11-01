@@ -7,15 +7,16 @@ import cloudinary.uploader
 
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, BasePermission
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 
 from .models import Contenido, Episodio, Visualizacion, Favorito
 
 from .serializers import (
     ContenidoSerializer,
+    EpisodioSerializer,
     VisualizacionSerializer,
     FavoritoSerializer,
 )
@@ -23,7 +24,8 @@ from .serializers import (
 from .permissions import (
     IsAdminOrCreator,
     IsOwnerOrAdmin,
-    IsAuthenticatedClient
+    IsAuthenticatedClient,
+    IsEpisodeOwnerOrAdmin,
 )
 
 from .services.hls import (
@@ -31,7 +33,7 @@ from .services.hls import (
     generar_url_firmada,
     obtener_cliente_b2,
 )
-
+from rest_framework import mixins
 
 # ==========================================
 # CONTENIDOS
@@ -622,17 +624,88 @@ class VisualizacionViewSet(viewsets.ModelViewSet):
 # EPISODIOS
 # ==========================================
 
-class EpisodioViewSet(viewsets.GenericViewSet):
+class IsEpisodeOwnerOrAdmin(BasePermission):
+    """Solo administradores y creadores autorizados pueden modificar episodios."""
 
-    queryset = (
-        Episodio.objects
-        .select_related("serie")
-        .all()
-    )
+    message = "No tiene permisos para administrar este episodio."
 
-    permission_classes = [
-        IsAuthenticated
-    ]
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(
+            user and user.is_authenticated and (
+                user.is_superuser or user.rol in ('admin', 'creador')
+            )
+        )
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        return bool(
+            user.is_superuser or user.rol == 'admin' or (
+                user.rol == 'creador' and obj.serie.creador_id == user.id
+            )
+        )
+
+
+class EpisodioViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+
+    queryset = Episodio.objects.select_related('serie', 'serie__creador').all()
+    serializer_class = EpisodioSerializer
+
+    def get_permissions(self):
+        if self.action in [
+            'list',
+            'retrieve',
+            'play',
+            'subtitulos',
+        ]:
+            return [IsAuthenticated()]
+
+        return [IsEpisodeOwnerOrAdmin()]
+
+    def _validar_serie_destino(self, serie):
+        user = self.request.user
+        if serie.tipo != Contenido.Tipos.SERIE:
+            raise ValidationError({'serie': 'El contenido debe ser una serie.'})
+        if not (user.is_superuser or user.rol == 'admin'):
+            if user.rol != 'creador' or serie.creador_id != user.id:
+                raise PermissionDenied('No tiene permisos sobre esta serie.')
+
+    def _validar_numeracion(self, serializer, instancia=None):
+        datos = serializer.validated_data
+        serie = datos.get('serie', instancia.serie if instancia else None)
+        temporada = datos.get('temporada', instancia.temporada if instancia else 1)
+        numero = datos.get('numero', instancia.numero if instancia else None)
+        self._validar_serie_destino(serie)
+        if temporada is not None and temporada < 1:
+            raise ValidationError({'temporada': 'Debe ser mayor a cero.'})
+        if numero is not None and numero < 1:
+            raise ValidationError({'numero': 'Debe ser mayor a cero.'})
+        if numero is not None:
+            repetidos = Episodio.objects.filter(
+                serie=serie, temporada=temporada, numero=numero
+            )
+            if instancia is not None:
+                repetidos = repetidos.exclude(pk=instancia.pk)
+            if repetidos.exists():
+                raise ValidationError({
+                    'numero': 'Ya existe ese episodio en la temporada indicada.'
+                })
+
+    def perform_create(self, serializer):
+        self._validar_numeracion(serializer)
+        serializer.save()
+
+    def perform_update(self, serializer):
+        episodio = self.get_object()
+        self._validar_numeracion(serializer, instancia=episodio)
+        serializer.save()
 
     # ======================================
     # REPRODUCIR EPISODIO HLS

@@ -1,6 +1,4 @@
-
 from rest_framework import serializers
-
 from .models import Contenido, Episodio, Visualizacion, Favorito
 from users.models import User
 
@@ -15,7 +13,6 @@ class UserBasicSerializer(serializers.ModelSerializer):
             'email',
             'rol',
         ]
-
 
 class EpisodioSerializer(serializers.ModelSerializer):
 
@@ -34,9 +31,60 @@ class EpisodioSerializer(serializers.ModelSerializer):
             'video_hls_url',
         ]
 
-        read_only_fields = [
-            'id',
-        ]
+        read_only_fields = ['id']
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+
+        serie = attrs.get(
+            'serie',
+            getattr(self.instance, 'serie', None)
+        )
+
+        if serie and serie.tipo != Contenido.Tipos.SERIE:
+            raise serializers.ValidationError({
+                'serie': 'Los episodios deben pertenecer a una serie.'
+            })
+
+        temporada = attrs.get(
+            'temporada',
+            getattr(self.instance, 'temporada', 1)
+        )
+
+        numero = attrs.get(
+            'numero',
+            getattr(self.instance, 'numero', None)
+        )
+
+        if temporada is not None and temporada < 1:
+            raise serializers.ValidationError({
+                'temporada': 'La temporada debe ser mayor a cero.'
+            })
+
+        if numero is not None and numero < 1:
+            raise serializers.ValidationError({
+                'numero': 'El número debe ser mayor a cero.'
+            })
+
+        if serie and numero is not None:
+            existentes = Episodio.objects.filter(
+                serie=serie,
+                temporada=temporada,
+                numero=numero
+            )
+
+            if self.instance:
+                existentes = existentes.exclude(pk=self.instance.pk)
+
+            if existentes.exists():
+                raise serializers.ValidationError({
+                    'numero': (
+                        'Ya existe un episodio con ese número '
+                        'en la temporada seleccionada.'
+                    )
+                })
+
+        return attrs
 
 
 class ContenidoSerializer(serializers.ModelSerializer):

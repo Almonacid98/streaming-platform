@@ -89,3 +89,32 @@ class IsAuthenticatedClient(BasePermission):
     def has_permission(self, request, view):
 
         return request.user.is_authenticated
+
+class IsEpisodeOwnerOrAdmin(BasePermission):
+
+    message = "No tiene permisos para administrar este episodio."
+
+    def has_permission(self, request, view):
+        user = request.user
+
+        if not user or not user.is_authenticated:
+            return False
+
+        return (
+            user.is_superuser
+            or user.rol in [
+                User.Roles.ADMIN,
+                User.Roles.CREADOR
+            ]
+        )
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+
+        if user.is_superuser or user.rol == User.Roles.ADMIN:
+            return True
+
+        return (
+            user.rol == User.Roles.CREADOR
+            and obj.serie.creador_id == user.id
+        )
