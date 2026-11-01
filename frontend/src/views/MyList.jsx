@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-
 import { Link } from 'react-router-dom'
 
 import Navbar from '../components/Navbar'
@@ -7,7 +6,6 @@ import Footer from '../components/Footer'
 import { useAuth } from '../context/AuthContext'
 
 const API_URL = import.meta.env.VITE_API_URL
-
 
 function MyList() {
   const { authFetch } = useAuth()
@@ -18,7 +16,7 @@ function MyList() {
   const [removingId, setRemovingId] = useState(null)
 
   // ==========================================
-  // CARGAR MI LISTA
+  // CARGAR MI LISTA (CON PAGINACIÓN)
   // ==========================================
 
   const loadFavorites = useCallback(async () => {
@@ -26,23 +24,48 @@ function MyList() {
       setLoading(true)
       setError('')
 
-      const response = await authFetch(
-        `${API_URL}/favoritos/`
-      )
+      let url = `${API_URL}/favoritos/`
+      const todosLosFavoritos = []
+      const paginasVisitadas = new Set()
 
-      if (!response.ok) {
-        throw new Error(
-          'No se pudo cargar tu lista de favoritos.'
-        )
+      while (url) {
+        if (paginasVisitadas.has(url)) {
+          throw new Error(
+            'Se detectó un problema con la paginación.'
+          )
+        }
+
+        paginasVisitadas.add(url)
+
+        const response = await authFetch(url)
+
+        if (!response.ok) {
+          throw new Error(
+            'No se pudo cargar tu lista de favoritos.'
+          )
+        }
+
+        const data = await response.json()
+
+        if (Array.isArray(data)) {
+          todosLosFavoritos.push(...data)
+          url = null
+        } else {
+          if (!Array.isArray(data?.results)) {
+            throw new Error(
+              'La respuesta de favoritos no tiene el formato esperado.'
+            )
+          }
+
+          todosLosFavoritos.push(...data.results)
+
+          url = data.next
+            ? new URL(data.next, url).toString()
+            : null
+        }
       }
 
-      const data = await response.json()
-
-      const results = Array.isArray(data)
-        ? data
-        : data.results || []
-
-      setFavorites(results)
+      setFavorites(todosLosFavoritos)
 
     } catch (err) {
       console.error(
@@ -138,7 +161,6 @@ function MyList() {
 
         <main className="my-list-loading">
           <div className="text-center">
-
             <div
               className="spinner-border text-danger mb-3"
               role="status"
@@ -148,15 +170,11 @@ function MyList() {
               </span>
             </div>
 
-            <p>
-              Cargando tu lista...
-            </p>
-
+            <p>Cargando tu lista...</p>
           </div>
         </main>
 
         <Footer />
-
         <MyListStyles />
       </div>
     )
@@ -168,7 +186,6 @@ function MyList() {
 
   return (
     <div className="my-list-page">
-
       <Navbar />
 
       <main className="container my-list-container">
@@ -176,9 +193,7 @@ function MyList() {
         {/* ENCABEZADO */}
 
         <header className="my-list-header">
-
           <div className="my-list-heading">
-
             <span className="my-list-eyebrow">
               STREAM PLATFORM
             </span>
@@ -191,7 +206,6 @@ function MyList() {
               Guardá tus películas y series favoritas
               para encontrarlas cuando quieras.
             </p>
-
           </div>
 
           <div className="my-list-counter">
@@ -205,7 +219,6 @@ function MyList() {
                 : 'contenidos guardados'}
             </span>
           </div>
-
         </header>
 
         {/* ERROR */}
@@ -229,9 +242,7 @@ function MyList() {
         {/* LISTA VACÍA */}
 
         {!error && favorites.length === 0 && (
-
           <section className="my-list-empty">
-
             <div className="empty-icon">
               <svg
                 viewBox="0 0 24 24"
@@ -261,19 +272,14 @@ function MyList() {
               Explorar catálogo
               <span>→</span>
             </Link>
-
           </section>
-
         )}
 
         {/* TARJETAS */}
 
         {favorites.length > 0 && (
-
           <section className="my-list-grid">
-
             {favorites.map(favorite => {
-
               const content = favorite.contenido_detalle
 
               if (!content) return null
@@ -286,7 +292,6 @@ function MyList() {
                 content.tipo === 'serie'
 
               return (
-
                 <article
                   className="my-list-card"
                   key={favorite.id}
@@ -299,7 +304,6 @@ function MyList() {
                     className="my-list-image-link"
                     aria-label={`Ver ${content.titulo}`}
                   >
-
                     {image ? (
                       <img
                         src={image}
@@ -324,15 +328,12 @@ function MyList() {
                     <span className="my-list-play">
                       ▶
                     </span>
-
                   </Link>
 
                   {/* INFORMACIÓN */}
 
                   <div className="my-list-card-body">
-
                     <div className="my-list-card-title-row">
-
                       <h2>
                         <Link to={`/content/${content.id}`}>
                           {content.titulo}
@@ -345,9 +346,7 @@ function MyList() {
                         onClick={() =>
                           handleRemove(favorite.id)
                         }
-                        disabled={
-                          removingId !== null
-                        }
+                        disabled={removingId !== null}
                         title="Quitar de Mi lista"
                         aria-label={`Quitar ${content.titulo}`}
                       >
@@ -366,11 +365,9 @@ function MyList() {
                           </svg>
                         )}
                       </button>
-
                     </div>
 
                     <div className="my-list-card-metadata">
-
                       {content.anio && (
                         <span>{content.anio}</span>
                       )}
@@ -390,7 +387,6 @@ function MyList() {
                           </span>
                         )
                       )}
-
                     </div>
 
                     <p className="my-list-card-description">
@@ -399,7 +395,6 @@ function MyList() {
                     </p>
 
                     <div className="my-list-card-footer">
-
                       <Link
                         to={`/content/${content.id}`}
                         className="my-list-detail-button"
@@ -411,42 +406,31 @@ function MyList() {
                       <span className="my-list-date">
                         {formatDate(favorite.fecha_agregado)}
                       </span>
-
                     </div>
-
                   </div>
-
                 </article>
-
               )
             })}
-
           </section>
-
         )}
 
         {/* VOLVER AL CATÁLOGO */}
 
         {favorites.length > 0 && (
           <div className="my-list-bottom">
-
             <Link to="/catalog">
               ← Seguir explorando
             </Link>
-
           </div>
         )}
 
       </main>
 
       <Footer />
-
       <MyListStyles />
-
     </div>
   )
 }
-
 
 // ==========================================
 // ESTILOS DE MI LISTA
@@ -456,7 +440,6 @@ function MyListStyles() {
   return (
     <style>
       {`
-
         .my-list-page {
           min-height: 100vh;
           display: flex;
@@ -959,7 +942,6 @@ function MyListStyles() {
             animation-duration: .01ms !important;
           }
         }
-
       `}
     </style>
   )

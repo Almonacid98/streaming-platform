@@ -1,4 +1,3 @@
-
 import {
   useEffect,
   useMemo,
@@ -16,6 +15,58 @@ import ContentCard from '../components/ContentCard'
 import EpisodesModal from '../components/EpisodesModal'
 
 const API_URL = import.meta.env.VITE_API_URL
+
+// ==========================================
+// OBTENER TODAS LAS PÁGINAS DE LA API
+// ==========================================
+
+async function fetchAllPages(initialUrl, signal) {
+  const results = []
+  const visitedUrls = new Set()
+
+  let url = initialUrl
+
+  while (url) {
+    if (visitedUrls.has(url)) {
+      throw new Error(
+        'Se detectó un problema con la paginación del catálogo.'
+      )
+    }
+
+    visitedUrls.add(url)
+
+    const response = await fetch(url, { signal })
+
+    if (!response.ok) {
+      throw new Error(
+        'No se pudo obtener la información del catálogo.'
+      )
+    }
+
+    const data = await response.json()
+
+    // API sin paginación
+    if (Array.isArray(data)) {
+      results.push(...data)
+      break
+    }
+
+    // API con paginación de Django REST Framework
+    if (!Array.isArray(data?.results)) {
+      throw new Error(
+        'La respuesta del catálogo no es válida.'
+      )
+    }
+
+    results.push(...data.results)
+
+    url = data.next
+      ? new URL(data.next, url).toString()
+      : null
+  }
+
+  return results
+}
 
 function Catalog() {
   const navigate = useNavigate()
@@ -98,6 +149,7 @@ function Catalog() {
   // ==========================================
 
   useEffect(() => {
+    const controller = new AbortController()
     let active = true
 
     const loadContents = async () => {
@@ -109,26 +161,20 @@ function Catalog() {
           ? `${API_URL}/contenidos/?${apiQuery}`
           : `${API_URL}/contenidos/`
 
-        const response = await fetch(url)
-
-        if (!response.ok) {
-          throw new Error(
-            'No se pudo cargar el catálogo.'
-          )
-        }
-
-        const data = await response.json()
-
-        if (!Array.isArray(data)) {
-          throw new Error(
-            'La respuesta del catálogo no es válida.'
-          )
-        }
+        const data = await fetchAllPages(
+          url,
+          controller.signal
+        )
 
         if (active) {
           setContents(data)
         }
+
       } catch (err) {
+        if (err.name === 'AbortError') {
+          return
+        }
+
         console.error(
           'Error al cargar el catálogo:',
           err
@@ -140,6 +186,7 @@ function Catalog() {
             'Ocurrió un error al cargar el catálogo.'
           )
         }
+
       } finally {
         if (active) {
           setLoading(false)
@@ -151,6 +198,7 @@ function Catalog() {
 
     return () => {
       active = false
+      controller.abort()
     }
   }, [apiQuery])
 
@@ -159,23 +207,15 @@ function Catalog() {
   // ==========================================
 
   useEffect(() => {
+    const controller = new AbortController()
     let active = true
 
     const loadGenres = async () => {
       try {
-        const response = await fetch(
-          `${API_URL}/contenidos/`
+        const data = await fetchAllPages(
+          `${API_URL}/contenidos/`,
+          controller.signal
         )
-
-        if (!response.ok) {
-          return
-        }
-
-        const data = await response.json()
-
-        if (!Array.isArray(data)) {
-          return
-        }
 
         const genres = [
           ...new Set(
@@ -188,7 +228,12 @@ function Catalog() {
         if (active) {
           setAvailableGenres(genres)
         }
+
       } catch (err) {
+        if (err.name === 'AbortError') {
+          return
+        }
+
         console.error(
           'No se pudieron cargar los géneros:',
           err
@@ -200,6 +245,7 @@ function Catalog() {
 
     return () => {
       active = false
+      controller.abort()
     }
   }, [])
 
@@ -268,6 +314,7 @@ function Catalog() {
       <Navbar />
 
       <main className="container py-5">
+
         {/* =====================================
             ENCABEZADO
         ====================================== */}
@@ -288,6 +335,7 @@ function Catalog() {
         ====================================== */}
 
         <section className="catalog-filter-panel">
+
           {/* ENCABEZADO */}
 
           <div className="catalog-filter-header">
@@ -353,6 +401,7 @@ function Catalog() {
           ================================== */}
 
           <div className="catalog-filter-controls">
+
             {/* TIPO */}
 
             <div className="catalog-filter-field">
@@ -585,6 +634,7 @@ function Catalog() {
           !error &&
           contents.length > 0 && (
             <section>
+
               {/* CABECERA RESULTADOS */}
 
               <div className="d-flex justify-content-between align-items-center mb-4">
