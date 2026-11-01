@@ -87,6 +87,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 # PERFIL DEL USUARIO AUTENTICADO
 # ==========================================
 
+
 class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -101,17 +102,16 @@ class ProfileSerializer(serializers.ModelSerializer):
             'edad',
             'genero',
             'rol',
+            'is_superuser',
             'fecha_creacion',
         )
 
-        # El usuario puede editar sus datos
-        # personales, pero no su rol ni su ID.
         read_only_fields = (
             'id',
             'rol',
+            'is_superuser',
             'fecha_creacion',
         )
-
 
 # ==========================================
 # LOGOUT

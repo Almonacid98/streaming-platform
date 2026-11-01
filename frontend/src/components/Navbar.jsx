@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 
 import {
@@ -17,15 +18,28 @@ function Navbar() {
 
 
   // ==========================================
+  // VERIFICAR PERMISOS DE ADMINISTRACIÓN
+  // ==========================================
+
+  const puedeAdministrar =
+    usuario?.is_superuser === true ||
+    usuario?.rol === 'admin' ||
+    usuario?.rol === 'creador'
+
+
+  // ==========================================
   // CERRAR SESIÓN
   // ==========================================
 
   const handleLogout = async () => {
     setCerrandoSesion(true)
 
-    await logout()
-
-    navigate('/login')
+    try {
+      await logout()
+      navigate('/login')
+    } finally {
+      setCerrandoSesion(false)
+    }
   }
 
 
@@ -158,6 +172,26 @@ function Navbar() {
                 Mi lista
               </NavLink>
             </li>
+
+
+            {/* PANEL DE ADMINISTRACIÓN */}
+
+            {puedeAdministrar && (
+              <li className="nav-item ms-lg-2">
+                <NavLink
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'nav-link active text-danger fw-semibold'
+                      : 'nav-link text-danger fw-semibold'
+                  }
+                  to="/admin"
+                  title="Administrar Streaming Platform"
+                >
+                  <span className="me-1">⚙</span>
+                  Administración
+                </NavLink>
+              </li>
+            )}
 
 
             {/* USUARIO AUTENTICADO */}

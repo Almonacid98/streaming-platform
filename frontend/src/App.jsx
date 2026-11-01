@@ -1,8 +1,5 @@
-import {
-  Routes,
-  Route,
-  Navigate
-} from 'react-router-dom'
+
+import { Routes, Route, Navigate } from 'react-router-dom'
 
 import Home from './views/Home'
 import Login from './views/Login'
@@ -13,131 +10,81 @@ import Catalog from './views/Catalog'
 import WatchHistory from './views/WatchHistory'
 import Profile from './views/Profile'
 import MyList from './views/MyList'
-import ProtectedRoute from './components/ProtectedRoute'
 
+import ProtectedRoute from './components/ProtectedRoute'
+import AdminRoute from './components/AdminRoute'
+
+import AdminDashboard from './views/AdminDashboard'
+import AdminContents from './views/AdminContents'
+import AdminContentForm from './views/AdminContentForm'
 
 function App() {
   return (
     <Routes>
-
-      {/* Rutas públicas */}
-
-      <Route
-        path="/login"
-        element={<Login />}
-      />
-
-      <Route
-        path="/register"
-        element={<Register />}
-      />
-
-
-      {/* Inicio */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       <Route
         path="/"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
+        element={<ProtectedRoute><Home /></ProtectedRoute>}
       />
-
-
-      {/* Catálogo */}
 
       <Route
         path="/catalog"
-        element={
-          <ProtectedRoute>
-            <Catalog />
-          </ProtectedRoute>
-        }
+        element={<ProtectedRoute><Catalog /></ProtectedRoute>}
       />
-
-
-      {/* Detalle de contenido */}
 
       <Route
         path="/content/:id"
-        element={
-          <ProtectedRoute>
-            <ContentDetail />
-          </ProtectedRoute>
-        }
+        element={<ProtectedRoute><ContentDetail /></ProtectedRoute>}
       />
-
-
-      {/* Reproductor de películas */}
 
       <Route
         path="/watch/:id"
-        element={
-          <ProtectedRoute>
-            <Player />
-          </ProtectedRoute>
-        }
+        element={<ProtectedRoute><Player /></ProtectedRoute>}
       />
-
-
-      {/* Reproductor de episodios */}
 
       <Route
         path="/watch/:id/episode/:episodeId"
-        element={
-          <ProtectedRoute>
-            <Player />
-          </ProtectedRoute>
-        }
+        element={<ProtectedRoute><Player /></ProtectedRoute>}
       />
-
-
-      {/* Historial */}
 
       <Route
         path="/history"
-        element={
-          <ProtectedRoute>
-            <WatchHistory />
-          </ProtectedRoute>
-        }
+        element={<ProtectedRoute><WatchHistory /></ProtectedRoute>}
       />
-
-      {/* Mi lista / Favoritos */}
 
       <Route
         path="/my-list"
-        element={
-          <ProtectedRoute>
-            <MyList />
-          </ProtectedRoute>
-        }
-      />  
-      {/* Perfil */}
+        element={<ProtectedRoute><MyList /></ProtectedRoute>}
+      />
 
       <Route
         path="/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
+        element={<ProtectedRoute><Profile /></ProtectedRoute>}
       />
-
-
-      {/* Ruta no encontrada */}
 
       <Route
-        path="*"
-        element={
-          <Navigate
-            to="/"
-            replace
-          />
-        }
+        path="/admin"
+        element={<AdminRoute><AdminDashboard /></AdminRoute>}
       />
 
+      <Route
+        path="/admin/content"
+        element={<AdminRoute><AdminContents /></AdminRoute>}
+      />
+
+      <Route
+        path="/admin/content/new"
+        element={<AdminRoute><AdminContentForm /></AdminRoute>}
+      />
+
+      <Route
+        path="/admin/content/:id/edit"
+        element={<AdminRoute><AdminContentForm /></AdminRoute>}
+      />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
