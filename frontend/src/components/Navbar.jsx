@@ -1,17 +1,30 @@
+
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+
+import {
+  NavLink,
+  useNavigate
+} from 'react-router-dom'
 
 import { useAuth } from '../context/AuthContext'
 
 
 function Navbar() {
-
   const navigate = useNavigate()
 
   const { usuario, logout } = useAuth()
 
-  const [cerrandoSesion, setCerrandoSesion] =
-    useState(false)
+  const [cerrandoSesion, setCerrandoSesion] = useState(false)
+
+
+  // ==========================================
+  // VERIFICAR PERMISOS DE ADMINISTRACIÓN
+  // ==========================================
+
+  const puedeAdministrar =
+    usuario?.is_superuser === true ||
+    usuario?.rol === 'admin' ||
+    usuario?.rol === 'creador'
 
 
   // ==========================================
@@ -19,29 +32,27 @@ function Navbar() {
   // ==========================================
 
   const handleLogout = async () => {
-
     setCerrandoSesion(true)
 
-    await logout()
-
-    navigate('/login')
+    try {
+      await logout()
+      navigate('/login')
+    } finally {
+      setCerrandoSesion(false)
+    }
   }
 
 
   return (
-
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-
       <div className="container">
-
 
         {/* LOGO */}
 
-        <a
+        <NavLink
           className="navbar-brand streaming-logo"
-          href="#"
+          to="/"
         >
-
           <span className="logo-stream">
             STREAM
           </span>
@@ -49,11 +60,10 @@ function Navbar() {
           <span className="logo-platform">
             PLATFORM
           </span>
+        </NavLink>
 
-        </a>
 
-
-        {/* BOTÓN RESPONSIVE */}
+        {/* MENÚ RESPONSIVE */}
 
         <button
           className="navbar-toggler"
@@ -64,9 +74,7 @@ function Navbar() {
           aria-expanded="false"
           aria-label="Abrir navegación"
         >
-
           <span className="navbar-toggler-icon"></span>
-
         </button>
 
 
@@ -74,102 +82,163 @@ function Navbar() {
           className="collapse navbar-collapse"
           id="navbarMenu"
         >
-
           <ul className="navbar-nav ms-auto align-items-lg-center">
-
 
             {/* INICIO */}
 
             <li className="nav-item">
-
-              <a
-                className="nav-link active"
-                href="#"
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? 'nav-link active'
+                    : 'nav-link'
+                }
+                to="/"
+                end
               >
                 Inicio
-              </a>
+              </NavLink>
+            </li>
 
+
+            {/* CATÁLOGO */}
+
+            <li className="nav-item">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? 'nav-link active'
+                    : 'nav-link'
+                }
+                to="/catalog"
+              >
+                Catálogo
+              </NavLink>
             </li>
 
 
             {/* PELÍCULAS */}
 
             <li className="nav-item">
-
-              <a
+              <NavLink
                 className="nav-link"
-                href="#"
+                to="/catalog?tipo=pelicula"
               >
                 Películas
-              </a>
-
+              </NavLink>
             </li>
 
 
             {/* SERIES */}
 
             <li className="nav-item">
-
-              <a
+              <NavLink
                 className="nav-link"
-                href="#"
+                to="/catalog?tipo=serie"
               >
                 Series
-              </a>
-
+              </NavLink>
             </li>
+
+
+            {/* HISTORIAL */}
+
+            <li className="nav-item">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? 'nav-link active'
+                    : 'nav-link'
+                }
+                to="/history"
+              >
+                Historial
+              </NavLink>
+            </li>
+
+
+            {/* MI LISTA */}
+
+            <li className="nav-item">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive
+                    ? 'nav-link active'
+                    : 'nav-link'
+                }
+                to="/my-list"
+              >
+                <span className="me-1">♡</span>
+                Mi lista
+              </NavLink>
+            </li>
+
+
+            {/* PANEL DE ADMINISTRACIÓN */}
+
+            {puedeAdministrar && (
+              <li className="nav-item ms-lg-2">
+                <NavLink
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'nav-link active text-danger fw-semibold'
+                      : 'nav-link text-danger fw-semibold'
+                  }
+                  to="/admin"
+                  title="Administrar Streaming Platform"
+                >
+                  <span className="me-1">⚙</span>
+                  Administración
+                </NavLink>
+              </li>
+            )}
 
 
             {/* USUARIO AUTENTICADO */}
 
             {usuario && (
-
               <>
 
+                {/* PERFIL */}
+
                 <li className="nav-item">
-
-                  <span className="nav-link">
-
+                  <NavLink
+                    className={({ isActive }) =>
+                      isActive
+                        ? 'nav-link active'
+                        : 'nav-link'
+                    }
+                    to="/profile"
+                    title="Ver y editar mi perfil"
+                  >
                     Hola, {usuario.username}
-
-                  </span>
-
+                  </NavLink>
                 </li>
 
 
                 {/* CERRAR SESIÓN */}
 
                 <li className="nav-item ms-lg-2">
-
                   <button
                     type="button"
                     className="btn btn-outline-danger btn-sm"
                     onClick={handleLogout}
                     disabled={cerrandoSesion}
                   >
-
-                    {
-                      cerrandoSesion
-                        ? 'Cerrando...'
-                        : 'Cerrar sesión'
-                    }
-
+                    {cerrandoSesion
+                      ? 'Cerrando...'
+                      : 'Cerrar sesión'}
                   </button>
-
                 </li>
 
               </>
-
             )}
 
           </ul>
-
         </div>
 
       </div>
-
     </nav>
-
   )
 }
 

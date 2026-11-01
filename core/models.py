@@ -1,6 +1,12 @@
+
 from django.db import models
 from django.conf import settings
+from django.db.models import Q
 
+
+# ==========================================
+# CONTENIDOS
+# ==========================================
 
 class Contenido(models.Model):
 
@@ -21,41 +27,44 @@ class Contenido(models.Model):
 
     duracion_min = models.PositiveIntegerField()
 
-    # Descripción o sinopsis del contenido
     descripcion = models.TextField(
         blank=True,
         default=''
     )
 
-    # Trailer / preview del contenido
+    # Trailer / preview de Cloudinary
     video_url = models.URLField(
         max_length=1000,
         blank=True,
         null=True
     )
 
-    # ID del video almacenado en Cloudinary
     video_public_id = models.CharField(
         max_length=500,
         blank=True,
         null=True
     )
 
-    # URL del contenido completo en formato HLS
+    # HLS local
     video_hls_url = models.URLField(
         max_length=1000,
         blank=True,
         null=True
     )
 
-    # Imagen vertical utilizada en las tarjetas
+    # Ruta del archivo en Backblaze B2
+    video_b2_key = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True
+    )
+
     portada_url = models.URLField(
         max_length=1000,
         blank=True,
         null=True
     )
 
-    # Imagen horizontal utilizada en el Hero
     hero_url = models.URLField(
         max_length=1000,
         blank=True,
@@ -72,6 +81,78 @@ class Contenido(models.Model):
         return self.titulo
 
 
+# ==========================================
+# EPISODIOS
+# ==========================================
+
+class Episodio(models.Model):
+
+    serie = models.ForeignKey(
+        Contenido,
+        on_delete=models.CASCADE,
+        related_name='episodios'
+    )
+
+    temporada = models.PositiveIntegerField(
+        default=1
+    )
+
+    numero = models.PositiveIntegerField()
+
+    titulo = models.CharField(
+        max_length=200
+    )
+
+    descripcion = models.TextField(
+        blank=True,
+        default=''
+    )
+
+    duracion_min = models.PositiveIntegerField()
+
+    video_b2_key = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True
+    )
+
+    video_hls_url = models.URLField(
+        max_length=1000,
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+
+        ordering = [
+            'temporada',
+            'numero'
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    'serie',
+                    'temporada',
+                    'numero'
+                ],
+                name='episodio_unico_por_serie_temporada_numero'
+            )
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.serie.titulo} - "
+            f"T{self.temporada} "
+            f"E{self.numero} - "
+            f"{self.titulo}"
+        )
+
+
+# ==========================================
+# VISUALIZACIONES
+# ==========================================
+
 class Visualizacion(models.Model):
 
     usuario = models.ForeignKey(
@@ -86,6 +167,16 @@ class Visualizacion(models.Model):
         related_name='visualizaciones'
     )
 
+    # NULL para películas.
+    # Para series identifica el capítulo reproducido.
+    episodio = models.ForeignKey(
+        Episodio,
+        on_delete=models.CASCADE,
+        related_name='visualizaciones',
+        null=True,
+        blank=True
+    )
+
     progreso_segundos = models.PositiveIntegerField(
         default=0
     )
@@ -95,22 +186,86 @@ class Visualizacion(models.Model):
     )
 
     class Meta:
+
+        constraints = [
+
+            # Una visualización por usuario y contenido
+            # cuando no se especifica un episodio.
+            models.UniqueConstraint(
+                fields=[
+                    'usuario',
+                    'contenido'
+                ],
+                condition=Q(episodio__isnull=True),
+                name='visualizacion_unica_usuario_contenido'
+            ),
+
+            # Una visualización independiente por
+            # usuario y episodio.
+            models.UniqueConstraint(
+                fields=[
+                    'usuario',
+                    'episodio'
+                ],
+                condition=Q(episodio__isnull=False),
+                name='visualizacion_unica_usuario_episodio'
+            )
+
+        ]
+
+    def __str__(self):
+
+        if self.episodio:
+            return (
+                f"{self.usuario} - "
+                f"{self.episodio} - "
+                f"{self.progreso_segundos}s"
+            )
+
+        return (
+            f"{self.usuario} - "
+            f"{self.contenido} - "
+            f"{self.progreso_segundos}s"
+        )
+
+
+# ==========================================
+# FAVORITOS / MI LISTA
+# ==========================================
+
+class Favorito(models.Model):
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='favoritos'
+    )
+
+    contenido = models.ForeignKey(
+        Contenido,
+        on_delete=models.CASCADE,
+        related_name='favoritos'
+    )
+
+    fecha_agregado = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    class Meta:
+
+        ordering = [
+            '-fecha_agregado'
+        ]
+
         constraints = [
             models.UniqueConstraint(
                 fields=[
                     'usuario',
                     'contenido'
                 ],
-                name=(
-                    'visualizacion_unica_por_'
-                    'usuario_contenido'
-                )
+                name='favorito_unico_usuario_contenido'
             )
         ]
 
     def __str__(self):
-        return (
-            f"{self.usuario} - "
-            f"{self.contenido} - "
-            f"{self.progreso_segundos}s"
-        )
+        return f"{self.usuario} - {self.contenido}"

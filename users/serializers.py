@@ -1,3 +1,4 @@
+
 from rest_framework import serializers
 
 from .models import User
@@ -11,7 +12,27 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = '__all__'
+        fields = (
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'email',
+            'edad',
+            'genero',
+            'rol',
+            'is_active',
+            'is_staff',
+            'is_superuser',
+            'fecha_creacion',
+        )
+
+        read_only_fields = (
+            'id',
+            'is_staff',
+            'is_superuser',
+            'fecha_creacion',
+        )
 
 
 # ==========================================
@@ -38,6 +59,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             'genero',
         )
 
+        read_only_fields = ('id',)
 
     def create(self, validated_data):
 
@@ -65,6 +87,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 # PERFIL DEL USUARIO AUTENTICADO
 # ==========================================
 
+
 class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -79,11 +102,16 @@ class ProfileSerializer(serializers.ModelSerializer):
             'edad',
             'genero',
             'rol',
+            'is_superuser',
             'fecha_creacion',
         )
 
-        read_only_fields = fields
-
+        read_only_fields = (
+            'id',
+            'rol',
+            'is_superuser',
+            'fecha_creacion',
+        )
 
 # ==========================================
 # LOGOUT

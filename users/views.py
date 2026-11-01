@@ -1,11 +1,12 @@
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, BasePermission
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema
+
 from .models import User
 from .serializers import (
     UserSerializer,
@@ -15,6 +16,29 @@ from .serializers import (
 )
 
 
+# ==========================================
+# PERMISOS DE ADMINISTRACION
+# ==========================================
+
+class IsAdminUserRole(BasePermission):
+
+    message = "No tiene permisos para administrar usuarios."
+
+    def has_permission(self, request, view):
+
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        return (
+            request.user.is_superuser
+            or request.user.rol == User.Roles.ADMIN
+        )
+
+
+# ==========================================
+# VISTAS DE USUARIOS
+# ==========================================
+
 class UserViewSet(viewsets.ModelViewSet):
 
     queryset = User.objects.all()
@@ -23,7 +47,7 @@ class UserViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'email']
 
-    # PERMISOS DINÁMICOS
+    # PERMISOS DINAMICOS
     def get_permissions(self):
 
         if self.action == 'register':
@@ -33,11 +57,11 @@ class UserViewSet(viewsets.ModelViewSet):
             permission_classes = [IsAuthenticated]
 
         else:
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsAdminUserRole]
 
         return [permission() for permission in permission_classes]
 
-    # SERIALIZERS DINÁMICOS
+    # SERIALIZERS DINAMICOS
     def get_serializer_class(self):
 
         if self.action == 'register':
@@ -71,25 +95,50 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.data,
             status=status.HTTP_201_CREATED
         )
+
     # PERFIL DEL USUARIO AUTENTICADO
     # GET /api/users/profile/
+    # PATCH /api/users/profile/
     @action(
         detail=False,
-        methods=['get'],
+        methods=['get', 'patch'],
         permission_classes=[IsAuthenticated]
     )
     def profile(self, request):
 
+        if request.method == 'GET':
+
+            serializer = self.get_serializer(
+                request.user
+            )
+
+            return Response(
+                serializer.data
+            )
+
         serializer = self.get_serializer(
-            request.user
+            request.user,
+            data=request.data,
+            partial=True
         )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        serializer.save()
 
         return Response(
-            serializer.data
+            serializer.data,
+            status=status.HTTP_200_OK
         )
 
+
+# ==========================================
 # LOGOUT JWT + BLACKLIST
 # POST /api/logout/
+# ==========================================
+
 @extend_schema(
     request=LogoutSerializer,
     responses={205: None}

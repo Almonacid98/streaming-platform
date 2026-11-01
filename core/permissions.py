@@ -46,26 +46,34 @@ class IsOwnerOrAdmin(BasePermission):
     - Un superusuario de Django.
     """
 
+    message = "No tiene permisos para modificar este contenido."
+
     def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
 
-        return request.user.is_authenticated
-
-
-    def has_object_permission(self, request, view, obj):
-
-        if request.method in SAFE_METHODS:
-            return True
-
-        # Superusuario de Django
         if request.user.is_superuser:
             return True
 
-        # Administrador de nuestra aplicación
+        return request.user.rol in [
+            User.Roles.ADMIN,
+            User.Roles.CREADOR
+        ]
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
+
+        if request.user.is_superuser:
+            return True
+
         if request.user.rol == User.Roles.ADMIN:
             return True
 
-        # Propietario del contenido
-        return obj.creador == request.user
+        return (
+            request.user.rol == User.Roles.CREADOR
+            and obj.creador_id == request.user.id
+        )
 
 
 # ==========================================
@@ -81,3 +89,32 @@ class IsAuthenticatedClient(BasePermission):
     def has_permission(self, request, view):
 
         return request.user.is_authenticated
+
+class IsEpisodeOwnerOrAdmin(BasePermission):
+
+    message = "No tiene permisos para administrar este episodio."
+
+    def has_permission(self, request, view):
+        user = request.user
+
+        if not user or not user.is_authenticated:
+            return False
+
+        return (
+            user.is_superuser
+            or user.rol in [
+                User.Roles.ADMIN,
+                User.Roles.CREADOR
+            ]
+        )
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+
+        if user.is_superuser or user.rol == User.Roles.ADMIN:
+            return True
+
+        return (
+            user.rol == User.Roles.CREADOR
+            and obj.serie.creador_id == user.id
+        )

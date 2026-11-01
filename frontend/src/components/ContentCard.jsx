@@ -13,6 +13,7 @@ function ContentCard({
   imagen,
   videoUrl,
   onReproducir,
+  onVerDetalle,
   disponible = false
 }) {
 
@@ -77,7 +78,7 @@ function ContentCard({
 
 
   // ==========================================
-  // REPRODUCIR VIDEO
+  // REPRODUCIR VIDEO PREVIEW
   // ==========================================
 
   useEffect(() => {
@@ -313,39 +314,77 @@ function ContentCard({
         </p>
 
 
-        {disponible ? (
+        {/* =====================================
+            ACCIONES
+        ====================================== */}
 
-          <button
-            className="
-              btn
-              btn-streaming
-              w-100
-              mt-auto
-            "
+        <div
+          className="
+            d-flex
+            flex-column
+            gap-2
+            mt-auto
+          "
+        >
 
-            onClick={
-              onReproducir
-            }
-          >
-            ▶ Reproducir
-          </button>
+          {disponible ? (
 
-        ) : (
+            <button
+              type="button"
 
-          <button
-            className="
-              btn
-              btn-secondary
-              w-100
-              mt-auto
-            "
+              className="
+                btn
+                btn-streaming
+                w-100
+              "
 
-            disabled
-          >
-            Próximamente
-          </button>
+              onClick={
+                onReproducir
+              }
+            >
+              ▶ Reproducir
+            </button>
 
-        )}
+          ) : (
+
+            <button
+              type="button"
+
+              className="
+                btn
+                btn-secondary
+                w-100
+              "
+
+              disabled
+            >
+              Próximamente
+            </button>
+
+          )}
+
+
+          {onVerDetalle && (
+
+            <button
+              type="button"
+
+              className="
+                btn
+                btn-outline-light
+                w-100
+              "
+
+              onClick={
+                onVerDetalle
+              }
+            >
+              Más información
+            </button>
+
+          )}
+
+        </div>
 
       </div>
 
