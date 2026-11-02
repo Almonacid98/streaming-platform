@@ -209,6 +209,24 @@ class ContenidoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+        # Los manifiestos HLS necesitan URLs firmadas para cada segmento.
+        # Reutilizamos el mismo servicio que ya emplean los episodios.
+        if contenido.video_b2_key.lower().split('?', 1)[0].endswith('.m3u8'):
+            try:
+                manifiesto = generar_manifiesto_hls(contenido.video_b2_key)
+                response = HttpResponse(
+                    manifiesto,
+                    content_type='application/vnd.apple.mpegurl',
+                )
+                response['Cache-Control'] = 'private, no-store'
+                return response
+            except Exception:
+                return Response(
+                    {'error': 'No se pudo preparar la reproducción HLS.'},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+
+        # Compatibilidad con películas MP4 almacenadas directamente en B2.
         try:
 
             # ----------------------------------

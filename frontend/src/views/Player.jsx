@@ -178,8 +178,22 @@ function Player() {
             )
           }
 
-          const dataPlay = await responsePlay.json()
-          b2Url = dataPlay.video_url
+          // Las películas HLS reciben un manifiesto con segmentos firmados.
+          // Los MP4 de B2 conservan la respuesta JSON anterior.
+          const tipoRespuesta = responsePlay.headers.get('content-type') || ''
+          if (tipoRespuesta.includes('mpegurl')) {
+            const textoHls = await responsePlay.text()
+            if (!textoHls.trimStart().startsWith('#EXTM3U')) {
+              throw new Error('Django no devolvió un manifiesto HLS válido.')
+            }
+            nuevoManifiesto = URL.createObjectURL(
+              new Blob([textoHls], { type: 'application/vnd.apple.mpegurl' })
+            )
+            blobCreado = nuevoManifiesto
+          } else {
+            const dataPlay = await responsePlay.json()
+            b2Url = dataPlay.video_url
+          }
         }
 
         // ======================================
@@ -268,7 +282,7 @@ function Player() {
 
     const hlsUrl = isEpisode
       ? (episode?.video_b2_key ? hlsPrivadoUrl : episode?.video_hls_url)
-      : contenido.video_hls_url
+      : (hlsPrivadoUrl || contenido.video_hls_url)
 
     const videoUrl = isEpisode
       ? null
