@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.db.models import Count
 from django.http import HttpResponse
@@ -793,6 +795,10 @@ class EpisodioViewSet(
             return response
 
         except Exception:
+            logging.getLogger(__name__).exception(
+                "Error al preparar HLS del episodio %s",
+                episodio.pk,
+            )
 
             return Response(
                 {
@@ -869,10 +875,6 @@ class FavoritoViewSet(viewsets.ModelViewSet):
 
     serializer_class = FavoritoSerializer
 
-    # Permite a Swagger identificar el modelo y su clave primaria.
-    # Las consultas reales siguen filtrándose por usuario.
-    queryset = Favorito.objects.none()
-    
     permission_classes = [
         IsAuthenticated
     ]
