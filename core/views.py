@@ -869,6 +869,10 @@ class FavoritoViewSet(viewsets.ModelViewSet):
 
     serializer_class = FavoritoSerializer
 
+    # Permite a Swagger identificar el modelo y su clave primaria.
+    # Las consultas reales siguen filtrándose por usuario.
+    queryset = Favorito.objects.none()
+    
     permission_classes = [
         IsAuthenticated
     ]

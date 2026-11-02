@@ -1,7 +1,6 @@
-
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-
+from core.health import health_check
 from .views import (
     ContenidoViewSet,
     EpisodioViewSet,
@@ -40,4 +39,12 @@ urlpatterns = [
         name='hls-manifiesto',
     ),
     path('', include(router.urls)),
+    # ==========================================
+        # HEALTH CHECK
+    # ==========================================
+    path(
+    'health/',
+    health_check,
+    name='health-check'
+    ),
 ]
