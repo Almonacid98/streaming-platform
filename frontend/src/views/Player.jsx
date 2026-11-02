@@ -12,6 +12,9 @@ function Player() {
   const navigate = useNavigate()
   const { authFetch } = useAuth()
   const videoRef = useRef(null)
+  const playerWrapperRef = useRef(null)
+  const cursorTimeoutRef = useRef(null)
+  const [cursorVisible, setCursorVisible] = useState(true)
   const authFetchRef = useRef(authFetch)
   authFetchRef.current = authFetch
 
@@ -35,6 +38,51 @@ function Player() {
   const [decisionTomada, setDecisionTomada] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  // Ocultar el cursor después de 3 segundos de inactividad en pantalla completa.
+  useEffect(() => {
+    const cancelarTemporizador = () => {
+      if (cursorTimeoutRef.current !== null) {
+        clearTimeout(cursorTimeoutRef.current)
+        cursorTimeoutRef.current = null
+      }
+    }
+
+    const estaEnPantallaCompleta = () => {
+      const fullscreenElement = document.fullscreenElement
+      const wrapper = playerWrapperRef.current
+      return Boolean(
+        fullscreenElement && wrapper &&
+        (fullscreenElement === wrapper ||
+          wrapper.contains(fullscreenElement) ||
+          fullscreenElement.contains(wrapper))
+      )
+    }
+
+    const mostrarCursor = () => {
+      cancelarTemporizador()
+      setCursorVisible(true)
+      if (estaEnPantallaCompleta()) {
+        cursorTimeoutRef.current = setTimeout(() => {
+          setCursorVisible(false)
+          cursorTimeoutRef.current = null
+        }, 3000)
+      }
+    }
+
+    const manejarFullscreen = () => {
+      mostrarCursor()
+    }
+
+    document.addEventListener('mousemove', mostrarCursor)
+    document.addEventListener('fullscreenchange', manejarFullscreen)
+
+    return () => {
+      document.removeEventListener('mousemove', mostrarCursor)
+      document.removeEventListener('fullscreenchange', manejarFullscreen)
+      cancelarTemporizador()
+    }
+  }, [])
 
   // ==========================================
   // SUBTÍTULOS
@@ -591,6 +639,12 @@ function Player() {
 
   return (
     <div className="min-vh-100 bg-black text-white position-relative">
+      <style>{`
+        .sp-player-wrapper.sp-cursor-hidden,
+        .sp-player-wrapper.sp-cursor-hidden * {
+          cursor: none !important;
+        }
+      `}</style>
       <div className="container py-4">
         <button
           className="btn btn-outline-light mb-4"
@@ -617,7 +671,12 @@ function Player() {
         </p>
 
         {hayVideo ? (
-          <div className="sp-player-wrapper ratio ratio-16x9 mt-4">
+          <div
+            ref={playerWrapperRef}
+            className={`sp-player-wrapper ratio ratio-16x9 mt-4 ${
+              !cursorVisible ? 'sp-cursor-hidden' : ''
+            }`}
+          >
             <video
               ref={videoRef}
               controls={false}
