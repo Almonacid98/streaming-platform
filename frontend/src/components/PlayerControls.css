@@ -359,3 +359,22 @@
     padding: 25px 12px 12px;
   }
 }
+.sp-player-track-menu {
+  z-index: 30;
+  min-width: 230px;
+  max-width: min(300px, calc(100vw - 24px));
+  max-height: min(340px, 65vh);
+  overflow-y: auto;
+}
+.sp-player-track-heading {
+  padding: 10px 12px 6px;
+  color: #aaa;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.sp-player-track-heading:not(:first-child) {
+  margin-top: 7px;
+  border-top: 1px solid rgba(255,255,255,.15);
+}

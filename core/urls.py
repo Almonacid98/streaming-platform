@@ -7,6 +7,7 @@ from .views import (
     EpisodioViewSet,
     VisualizacionViewSet,
     FavoritoViewSet,
+    manifiesto_hls_secundario,
 )
 
 router = DefaultRouter()
@@ -33,5 +34,10 @@ router.register(
 )
 
 urlpatterns = [
+    path(
+        'hls/manifiesto/<str:token>/',
+        manifiesto_hls_secundario,
+        name='hls-manifiesto',
+    ),
     path('', include(router.urls)),
 ]

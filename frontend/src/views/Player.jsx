@@ -12,6 +12,7 @@ function Player() {
   const navigate = useNavigate()
   const { authFetch } = useAuth()
   const videoRef = useRef(null)
+  const hlsRef = useRef(null)
   const playerWrapperRef = useRef(null)
   const cursorTimeoutRef = useRef(null)
   const [cursorVisible, setCursorVisible] = useState(true)
@@ -38,6 +39,32 @@ function Player() {
   const [decisionTomada, setDecisionTomada] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [pistasAudio, setPistasAudio] = useState([])
+  const [pistasSubtitulosHls, setPistasSubtitulosHls] = useState([])
+  const [audioSeleccionado, setAudioSeleccionado] = useState(-1)
+  const [subtituloSeleccionado, setSubtituloSeleccionado] = useState(-1)
+
+  const cambiarAudio = (indice) => {
+    const hls = hlsRef.current
+    if (!hls || !hls.audioTracks[indice]) return
+    hls.audioTrack = indice
+    setAudioSeleccionado(indice)
+  }
+
+  const cambiarSubtitulos = (indice) => {
+    const hls = hlsRef.current
+    if (!hls) return
+    if (indice === -1) {
+      hls.subtitleTrack = -1
+      hls.subtitleDisplay = false
+      setSubtituloSeleccionado(-1)
+      return
+    }
+    if (!hls.subtitleTracks[indice]) return
+    hls.subtitleDisplay = true
+    hls.subtitleTrack = indice
+    setSubtituloSeleccionado(indice)
+  }
 
   // Ocultar el cursor después de 3 segundos de inactividad en pantalla completa.
   useEffect(() => {
@@ -151,6 +178,10 @@ function Player() {
         setVideoB2Url(null)
         setHlsPrivadoUrl(null)
         setSubtitulosB2([])
+        setPistasAudio([])
+        setPistasSubtitulosHls([])
+        setAudioSeleccionado(-1)
+        setSubtituloSeleccionado(-1)
 
         const responseContenido = await fetch(
           `${API_URL}/contenidos/${id}/`
@@ -324,6 +355,12 @@ function Player() {
   useEffect(() => {
     const video = videoRef.current
 
+    hlsRef.current = null
+    setPistasAudio([])
+    setPistasSubtitulosHls([])
+    setAudioSeleccionado(-1)
+    setSubtituloSeleccionado(-1)
+
     if (!video || !contenido) {
       return
     }
@@ -365,12 +402,32 @@ function Player() {
 
       if (Hls.isSupported()) {
         const hls = new Hls()
+        hlsRef.current = hls
+        hls.subtitleDisplay = false
+
+        const actualizarAudio = () => {
+          setPistasAudio([...hls.audioTracks])
+          setAudioSeleccionado(hls.audioTrack)
+        }
+
+        const actualizarSubtitulos = () => {
+          setPistasSubtitulosHls([...hls.subtitleTracks])
+          setSubtituloSeleccionado(hls.subtitleTrack)
+        }
+
+        hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, actualizarAudio)
+        hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, actualizarAudio)
+        hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, actualizarSubtitulos)
+        hls.on(Hls.Events.SUBTITLE_TRACK_SWITCH, () => {
+          setSubtituloSeleccionado(hls.subtitleTrack)
+        })
 
         hls.loadSource(hlsUrl)
         hls.attachMedia(video)
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           console.log('Manifiesto HLS cargado correctamente.')
+          actualizarAudio()
         })
 
         hls.on(Hls.Events.ERROR, (event, data) => {
@@ -384,6 +441,7 @@ function Player() {
         })
 
         return () => {
+          if (hlsRef.current === hls) hlsRef.current = null
           hls.destroy()
         }
       }
@@ -703,6 +761,12 @@ function Player() {
             <PlayerControls
               videoRef={videoRef}
               enabled={decisionTomada}
+              audioTracks={pistasAudio}
+              selectedAudio={audioSeleccionado}
+              onAudioChange={cambiarAudio}
+              hlsSubtitleTracks={pistasSubtitulosHls}
+              selectedHlsSubtitle={subtituloSeleccionado}
+              onHlsSubtitleChange={cambiarSubtitulos}
             />
           </div>
         ) : (

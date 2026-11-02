@@ -46,7 +46,16 @@ function formatTime(seconds) {
 // COMPONENTE
 // ==========================================
 
-function PlayerControls({ videoRef, enabled = true }) {
+function PlayerControls({
+  videoRef,
+  enabled = true,
+  audioTracks = [],
+  selectedAudio = -1,
+  onAudioChange,
+  hlsSubtitleTracks = [],
+  selectedHlsSubtitle = -1,
+  onHlsSubtitleChange
+}) {
   const hideTimerRef = useRef(null)
   const interactingRef = useRef(false)
   const subtitlesOpenRef = useRef(false)
@@ -64,6 +73,7 @@ function PlayerControls({ videoRef, enabled = true }) {
   const [subtitleTracks, setSubtitleTracks] = useState([])
   const [selectedSubtitle, setSelectedSubtitle] = useState(-1)
   const [showSubtitles, setShowSubtitles] = useState(false)
+  const hasHlsTracks = audioTracks.length > 1 || hlsSubtitleTracks.length > 0
 
   // ==========================================
   // VISIBILIDAD AUTOMÁTICA
@@ -431,6 +441,22 @@ function PlayerControls({ videoRef, enabled = true }) {
     }
   }
 
+  const closeTrackMenu = () => {
+    setShowSubtitles(false)
+    subtitlesOpenRef.current = false
+    showControls()
+  }
+
+  const changeAudioTrack = (index) => {
+    onAudioChange?.(index)
+    closeTrackMenu()
+  }
+
+  const changeHlsSubtitle = (index) => {
+    onHlsSubtitleChange?.(index)
+    closeTrackMenu()
+  }
+
   const changeSubtitle = (index) => {
     const video = videoRef.current
 
@@ -615,45 +641,79 @@ function PlayerControls({ videoRef, enabled = true }) {
 
         <div className="sp-player-right">
 
-          {/* SUBTÍTULOS */}
+          {/* AUDIO Y SUBTÍTULOS: UN ÚNICO MENÚ EN LA BARRA */}
 
-          {subtitleTracks.length > 0 && (
+          {(hasHlsTracks || subtitleTracks.length > 0) && (
             <div className="sp-player-subtitle-container">
               <button
                 type="button"
                 className="sp-player-icon"
                 onClick={toggleSubtitlesMenu}
-                title="Subtítulos"
-                aria-label="Subtítulos"
+                title="Audio y subtítulos"
+                aria-label="Audio y subtítulos"
+                aria-expanded={showSubtitles}
+                disabled={!enabled}
               >
                 <Captions size={24} />
               </button>
 
               {showSubtitles && (
-                <div className="sp-player-subtitle-menu">
-                  <button
-                    type="button"
-                    onClick={() => changeSubtitle(-1)}
-                  >
-                    Desactivados
-                  </button>
+                <div className="sp-player-subtitle-menu sp-player-track-menu">
+                  {audioTracks.length > 1 && (
+                    <>
+                      <div className="sp-player-track-heading">Audio</div>
+                      {audioTracks.map((track, index) => (
+                        <button
+                          type="button"
+                          key={`audio-${index}`}
+                          className={selectedAudio === index ? 'selected' : ''}
+                          onClick={() => changeAudioTrack(index)}
+                        >
+                          {track.name || track.lang || `Audio ${index + 1}`}
+                          {selectedAudio === index ? ' ✓' : ''}
+                        </button>
+                      ))}
+                    </>
+                  )}
 
-                  {subtitleTracks.map((track) => (
-                    <button
-                      type="button"
-                      key={track.index}
-                      onClick={() =>
-                        changeSubtitle(track.index)
-                      }
-                      className={
-                        selectedSubtitle === track.index
-                          ? 'selected'
-                          : ''
-                      }
-                    >
-                      {track.label}
-                    </button>
-                  ))}
+                  {(hlsSubtitleTracks.length > 0 || subtitleTracks.length > 0) && (
+                    <>
+                      <div className="sp-player-track-heading">Subtítulos</div>
+                      <button
+                        type="button"
+                        className={(hasHlsTracks
+                          ? selectedHlsSubtitle === -1
+                          : selectedSubtitle === -1) ? 'selected' : ''}
+                        onClick={() => hasHlsTracks
+                          ? changeHlsSubtitle(-1)
+                          : changeSubtitle(-1)}
+                      >
+                        Desactivados
+                      </button>
+                      {hlsSubtitleTracks.length > 0
+                        ? hlsSubtitleTracks.map((track, index) => (
+                            <button
+                              type="button"
+                              key={`hls-sub-${index}`}
+                              className={selectedHlsSubtitle === index ? 'selected' : ''}
+                              onClick={() => changeHlsSubtitle(index)}
+                            >
+                              {track.name || track.lang || `Subtítulos ${index + 1}`}
+                              {selectedHlsSubtitle === index ? ' ✓' : ''}
+                            </button>
+                          ))
+                        : subtitleTracks.map((track) => (
+                            <button
+                              type="button"
+                              key={`native-sub-${track.index}`}
+                              className={selectedSubtitle === track.index ? 'selected' : ''}
+                              onClick={() => changeSubtitle(track.index)}
+                            >
+                              {track.label}
+                            </button>
+                          ))}
+                    </>
+                  )}
                 </div>
               )}
             </div>

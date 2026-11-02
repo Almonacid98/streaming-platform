@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db.models import Count
 from django.http import HttpResponse
+from django.core import signing
+from django.views.decorators.http import require_GET
 
 import boto3
 import cloudinary.uploader
@@ -32,8 +34,35 @@ from .services.hls import (
     generar_manifiesto_hls,
     generar_url_firmada,
     obtener_cliente_b2,
+    validar_token_manifiesto,
 )
 from rest_framework import mixins
+
+# ==========================================
+# MANIFIESTOS HLS SECUNDARIOS
+# ==========================================
+
+@require_GET
+def manifiesto_hls_secundario(request, token):
+    """Sirve un manifiesto HLS secundario mediante un token temporal firmado."""
+    try:
+        key, raiz = validar_token_manifiesto(token)
+        manifiesto = generar_manifiesto_hls(
+            key,
+            request=request,
+            raiz=raiz,
+        )
+        response = HttpResponse(
+            manifiesto,
+            content_type="application/vnd.apple.mpegurl",
+        )
+        response["Cache-Control"] = "private, no-store"
+        return response
+    except (signing.BadSignature, ValueError, KeyError, TypeError):
+        return HttpResponse("Manifiesto no válido o expirado.", status=403)
+    except Exception:
+        return HttpResponse("No se pudo preparar el manifiesto HLS.", status=502)
+
 
 # ==========================================
 # CONTENIDOS
@@ -213,7 +242,10 @@ class ContenidoViewSet(viewsets.ModelViewSet):
         # Reutilizamos el mismo servicio que ya emplean los episodios.
         if contenido.video_b2_key.lower().split('?', 1)[0].endswith('.m3u8'):
             try:
-                manifiesto = generar_manifiesto_hls(contenido.video_b2_key)
+                manifiesto = generar_manifiesto_hls(
+                    contenido.video_b2_key,
+                    request=request,
+                )
                 response = HttpResponse(
                     manifiesto,
                     content_type='application/vnd.apple.mpegurl',
@@ -747,7 +779,8 @@ class EpisodioViewSet(
         try:
 
             manifiesto = generar_manifiesto_hls(
-                episodio.video_b2_key
+                episodio.video_b2_key,
+                request=request,
             )
 
             response = HttpResponse(
