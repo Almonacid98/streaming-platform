@@ -2,12 +2,12 @@ import logging
 
 from django.conf import settings
 from django.db.models import Count
+from django.db import transaction
 from django.http import HttpResponse
 from django.core import signing
 from django.views.decorators.http import require_GET
 
 import boto3
-import cloudinary.uploader
 
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
@@ -17,6 +17,12 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 
 from .models import Contenido, Episodio, Visualizacion, Favorito
+from .services.cloudinary_upload import (
+    subir_archivo_cloudinary,
+    eliminar_archivo_cloudinary,
+    ErrorArchivoCloudinary,
+    ErrorSubidaCloudinary,
+)
 
 from .serializers import (
     ContenidoSerializer,
@@ -107,7 +113,7 @@ class ContenidoViewSet(viewsets.ModelViewSet):
             return [IsAdminOrCreator()]
 
         # Subir video
-        if self.action == 'subir_video':
+        if self.action in ['subir_video', 'subir_portada', 'subir_hero']:
             return [IsOwnerOrAdmin()]
 
         # Editar o eliminar
@@ -324,131 +330,115 @@ class ContenidoViewSet(viewsets.ModelViewSet):
             )
 
     # ======================================
-    # SUBIR VIDEO A CLOUDINARY
+    # SUBIDAS MULTIMEDIA A CLOUDINARY
     # ======================================
+
+    def _subir_multimedia(self, request, *, campo_archivo, tipo, campo_url, mensaje):
+        """Sube un archivo nuevo y actualiza únicamente los campos relacionados.
+
+        No borra los multimedia anteriores. En caso de fallo al guardar,
+        intenta limpiar el archivo nuevo que se acaba de subir.
+        """
+        contenido = self.get_object()  # Verifica también IsOwnerOrAdmin.
+        archivo = request.FILES.get(campo_archivo)
+
+        if archivo is None:
+            return Response(
+                {'error': f'Debe enviar un archivo en el campo "{campo_archivo}".'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            resultado = subir_archivo_cloudinary(archivo, tipo)
+        except ErrorArchivoCloudinary as exc:
+            return Response(
+                {'error': str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except ErrorSubidaCloudinary:
+            return Response(
+                {'error': 'No se pudo subir el archivo a Cloudinary.'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        # Solo borramos una subida NUEVA si la actualización DB falla.
+        # Las imágenes/tráilers antiguos permanecen en Cloudinary.
+        try:
+            with transaction.atomic():
+                contenido_actual = Contenido.objects.select_for_update().get(
+                    pk=contenido.pk
+                )
+                setattr(contenido_actual, campo_url, resultado['secure_url'])
+                campos_actualizados = [campo_url]
+                if tipo == 'trailer':
+                    contenido_actual.video_public_id = resultado['public_id']
+                    campos_actualizados.append('video_public_id')
+                contenido_actual.save(update_fields=campos_actualizados)
+        except Exception:
+            logging.getLogger(__name__).exception(
+                'Error al guardar %s del contenido %s', tipo, contenido.pk
+            )
+            eliminar_archivo_cloudinary(
+                resultado['public_id'], resultado['resource_type']
+            )
+            return Response(
+                {'error': 'El archivo se subió, pero no se pudo guardar el contenido.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return Response(
+            {
+                'message': mensaje,
+                'contenido': self.get_serializer(contenido_actual).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        methods=['post'],
+        url_path='subir-portada',
+        parser_classes=[MultiPartParser, FormParser],
+    )
+    def subir_portada(self, request, pk=None):
+        return self._subir_multimedia(
+            request,
+            campo_archivo='portada',
+            tipo='portada',
+            campo_url='portada_url',
+            mensaje='Portada subida correctamente.',
+        )
+
+    @action(
+        detail=True,
+        methods=['post'],
+        url_path='subir-hero',
+        parser_classes=[MultiPartParser, FormParser],
+    )
+    def subir_hero(self, request, pk=None):
+        return self._subir_multimedia(
+            request,
+            campo_archivo='hero',
+            tipo='hero',
+            campo_url='hero_url',
+            mensaje='Imagen Hero subida correctamente.',
+        )
 
     @action(
         detail=True,
         methods=['post'],
         url_path='subir-video',
-        parser_classes=[
-            MultiPartParser,
-            FormParser
-        ]
+        parser_classes=[MultiPartParser, FormParser],
     )
     def subir_video(self, request, pk=None):
-
-        contenido = self.get_object()
-
-        archivo_video = request.FILES.get(
-            'video'
+        # Conservamos el campo `video` y la estructura de respuesta anterior.
+        return self._subir_multimedia(
+            request,
+            campo_archivo='video',
+            tipo='trailer',
+            campo_url='video_url',
+            mensaje='Video subido correctamente.',
         )
-
-        # ----------------------------------
-        # VALIDAR ARCHIVO
-        # ----------------------------------
-
-        if not archivo_video:
-
-            return Response(
-                {
-                    'error':
-                        'Debe enviar un archivo de video '
-                        'en el campo "video".'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # ----------------------------------
-        # VALIDAR TIPO DE ARCHIVO
-        # ----------------------------------
-
-        content_type = (
-            archivo_video.content_type or ''
-        )
-
-        if not content_type.startswith('video/'):
-
-            return Response(
-                {
-                    'error':
-                        'El archivo enviado no es un video.'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-
-            # ----------------------------------
-            # ELIMINAR VIDEO ANTERIOR
-            # ----------------------------------
-
-            if contenido.video_public_id:
-
-                cloudinary.uploader.destroy(
-                    contenido.video_public_id,
-                    resource_type='video'
-                )
-
-            # ----------------------------------
-            # SUBIR NUEVO VIDEO
-            # ----------------------------------
-
-            resultado = (
-                cloudinary.uploader.upload(
-                    archivo_video,
-                    resource_type='video',
-                    folder='streaming-platform/videos'
-                )
-            )
-
-            # ----------------------------------
-            # GUARDAR DATOS EN LA BASE DE DATOS
-            # ----------------------------------
-
-            contenido.video_url = (
-                resultado['secure_url']
-            )
-
-            contenido.video_public_id = (
-                resultado['public_id']
-            )
-
-            contenido.save(
-                update_fields=[
-                    'video_url',
-                    'video_public_id'
-                ]
-            )
-
-            serializer = self.get_serializer(
-                contenido
-            )
-
-            return Response(
-                {
-                    'message':
-                        'Video subido correctamente.',
-
-                    'contenido':
-                        serializer.data
-                },
-                status=status.HTTP_200_OK
-            )
-
-        except Exception as error:
-
-            return Response(
-                {
-                    'error':
-                        'No se pudo subir el video '
-                        'a Cloudinary.',
-
-                    'detalle':
-                        str(error)
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
 
 # ==========================================

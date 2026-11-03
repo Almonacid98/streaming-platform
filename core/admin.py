@@ -6,7 +6,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import path, reverse
 from django.utils.html import format_html
 
+import cloudinary.uploader
+
 from .models import Contenido, Episodio, Visualizacion
+from .admin_forms import ContenidoCloudinaryForm
 from .services.hls import obtener_cliente_b2
 from .services.b2_upload import (
     ErrorSubidaHLS,
@@ -47,6 +50,8 @@ class EpisodioInline(admin.TabularInline):
 
 @admin.register(Contenido)
 class ContenidoAdmin(admin.ModelAdmin):
+
+    form = ContenidoCloudinaryForm
 
     list_display = (
         "id",
@@ -97,7 +102,8 @@ class ContenidoAdmin(admin.ModelAdmin):
             **kwargs
         )
 
-    # Validación del creador
+    # Validación del creador y subida de archivos a Cloudinary.
+    # El sistema de episodios y Backblaze B2 no se modifica.
     def save_model(self, request, obj, form, change):
 
         if not obj.creador_id or obj.creador.rol != "creador":
@@ -106,12 +112,78 @@ class ContenidoAdmin(admin.ModelAdmin):
                 "pueden subir contenidos."
             )
 
-        super().save_model(
-            request,
-            obj,
-            form,
-            change
+        # Se suben únicamente los archivos que se seleccionaron.
+        # Si no se seleccionó uno, se conserva su URL actual.
+        archivos = (
+            ("portada_archivo", "portada_url", "image", "streaming-platform/portadas"),
+            ("hero_archivo", "hero_url", "image", "streaming-platform/heroes"),
+            ("trailer_archivo", "video_url", "video", "streaming-platform/trailers"),
         )
+
+        subidas_nuevas = []
+
+        try:
+            for campo_archivo, campo_url, tipo_recurso, carpeta in archivos:
+                archivo = form.cleaned_data.get(campo_archivo)
+                if not archivo:
+                    continue
+
+                # Subida fragmentada para tráilers de hasta 100 MiB.
+                subir = (
+                    cloudinary.uploader.upload_large
+                    if campo_archivo == "trailer_archivo"
+                    else cloudinary.uploader.upload
+                )
+                opciones = {"chunk_size": 6_000_000} if campo_archivo == "trailer_archivo" else {}
+                resultado = subir(
+                    archivo,
+                    folder=carpeta,
+                    resource_type=tipo_recurso,
+                    **opciones,
+                )
+
+                public_id = resultado.get("public_id")
+                url_segura = resultado.get("secure_url")
+                if public_id:
+                    subidas_nuevas.append((public_id, tipo_recurso))
+
+                if not url_segura or not public_id:
+                    raise ValueError(
+                        f"Cloudinary no devolvió una URL o identificador "
+                        f"válido para {campo_archivo}."
+                    )
+
+                setattr(obj, campo_url, url_segura)
+
+                if campo_archivo == "trailer_archivo":
+                    obj.video_public_id = public_id
+
+            # Guardar contenido con las URL nuevas solo cuando
+            # todas las subidas solicitadas terminaron correctamente.
+            super().save_model(request, obj, form, change)
+
+        except Exception:
+            # Intento de limpieza de archivos recién subidos si
+            # falla la operación. No se borran archivos antiguos.
+            for public_id, tipo_recurso in reversed(subidas_nuevas):
+                try:
+                    cloudinary.uploader.destroy(
+                        public_id,
+                        resource_type=tipo_recurso,
+                        invalidate=True,
+                    )
+                except Exception:
+                    # Un error de limpieza nunca oculta el error original.
+                    pass
+            raise
+
+        if subidas_nuevas:
+            self.message_user(
+                request,
+                "Archivos multimedia subidos a Cloudinary y "
+                "contenido guardado correctamente.",
+                level=messages.SUCCESS,
+            )
 
 
 # ==========================================

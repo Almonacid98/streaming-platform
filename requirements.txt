@@ -10,3 +10,4 @@ boto3
 gunicorn
 whitenoise
 dj-database-url
+Pillow>=10,<13
